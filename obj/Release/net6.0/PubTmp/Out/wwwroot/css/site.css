@@ -1,0 +1,346 @@
+.create_qr_text
+{
+    text-align:center;
+    font-size:calc(12px + 0.6vw);
+}
+.create_qr_org_text 
+{
+    margin-top:2vh;
+    text-align: center;
+    font-size: calc(12px + 0.8vw);
+}
+.create_qr_organizations {
+    margin-top: 2vh;
+    display: flex;
+    justify-content: center;
+  
+}
+.create_qr_org {
+    padding-top: 0.7vh;
+    padding-bottom: 0.7vh;
+    padding-left: 0.7vw;
+    padding-right: 0.7vw;
+    margin-left: 1vw;
+    margin-right: 1vw;
+    background-color: lightblue;
+    border-radius: 10px;
+    font-size: calc(12px + 0.6vw);
+    user-select: none;
+}
+.create_qr_result
+{
+
+}
+.create_qr_org:hover {
+    cursor: pointer;
+    transform: scale(1.1); /* Изменение размера элемента при наведении */
+}
+.create_qr_org:active {
+    background-color: white;
+}
+.Gen_Qr_list_dev_and_probl {
+    margin-top: 3vh;
+    margin-bottom: 3vh;
+    padding-left: 3vh;
+    padding-right: 3vh;
+    border: 1px solid black;
+}
+.Gen_Qr_list_dev_and_probl_text {
+    font-size: calc(12px + 0.6vw);
+}
+.Gen_Qr_list_dev_and_probl_btn {
+    font-size: calc(12px + 0.6vw);
+    border-radius: 20px;
+    padding-top: 0.7vh;
+    padding-bottom: 0.7vh;
+    padding-left: 0.7vw;
+    padding-right: 0.7vw;
+    margin-left: 1vw;
+    margin-right: 1vw;
+}
+.Gen_Qr_list_dev_and_probl_result {
+  
+   display:flex;
+   justify-content:center;
+   align-content:center;
+  
+}
+    .Gen_Qr_list_dev_and_probl_result > img 
+    {
+        border: 1px solid black;
+    }
+
+.Gen_Qr_list_dev_and_probl_text {
+    border: 1px solid black;
+    text-align: center;
+    padding-top: 1vw;
+    padding-bottom: 1vw;
+    padding-left: 1vw;
+    padding-right: 1vw;
+    font-size: calc(16px + 1vw);
+}
+    .Gen_Qr_list_dev_and_probl_text:hover {
+        background-color:lightgray;
+       cursor:pointer;
+    }
+    .drop_down-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+.Part_sel_dev_top_text
+{
+    font-size:calc(16px + 1vw);
+    margin-top:2vh;
+}
+.drop_down {
+    padding: 8px;
+    font-size: calc(12px + 0.6vw);
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.search-button {
+    padding: 8px 16px;
+    font-size: calc(12px + 0.6vw);
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+    .search-button:hover {
+        background-color: #0056b3;
+    }
+
+.drop_downs
+{
+   display:flex;
+   justify-content:center;
+    margin-top:5vh;
+}
+.Part_sel_dev_text
+{
+    font-size:calc(14px + 1vw);
+   text-align:center;
+}
+.Part_sel_dev_url {
+    font-size: calc(14px + 1vw);
+    text-decoration: none;
+    display:flex;
+  justify-content:center;
+  margin-bottom:1vh;
+}
+.Part_dev_name
+{
+    text-align:center;
+    font-size:calc(16px + 1vw);
+
+}
+.Part_dev_buttons {
+    display: flex;
+    justify-content: center;
+    font-size: calc(12px + 0.8vw);
+    margin-top: 3vh;
+    -webkit-user-select: none; /* Для Safari */
+    -moz-user-select: none; /* Для Firefox */
+    -ms-user-select: none; /* Для IE/Edge */
+    user-select: none; /* Стандартное свойство */
+}
+
+.Part_dev_but_red {
+    margin-left: 3vw;
+    margin-right: 3vw;
+    border: 0.1vw solid black;
+    padding-top: 1vh;
+    padding-bottom: 1vh;
+    padding-left: 1vw;
+    padding-right: 1vw;
+    border-radius: 150px;
+    background-color: lightgray;
+    transition: box-shadow 0.3s; /* Добавляем плавный переход */
+}
+.Part_dev_but_add {
+    margin-left: 3vw;
+    margin-right: 3vw;
+    border: 0.1vw solid black;
+    padding-top: 1vh;
+    padding-bottom: 1vh;
+    padding-left: 1vw;
+    padding-right: 1vw;
+    border-radius: 150px;
+    background-color: lightblue;
+    transition: box-shadow 0.2s; /* Добавляем плавный переход */
+}
+.Part_dev_but_red:hover {
+    cursor: pointer;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5); /* Добавляем тень при наведении */
+}
+.Part_dev_but_add:hover {
+    cursor: pointer;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5); /* Добавляем тень при наведении */
+}
+
+.Part_dev_result {
+    text-align:center;
+    margin-top:3vh;
+    margin-bottom:3vh;
+}
+.for_add {
+  text-align:center;
+}
+.add_for_hub
+{
+    display:inline-block;
+    margin-left:1vw;
+    margin-right:1vw;
+}
+.add_for_org {
+    display: inline-block;
+    margin-left: 1vw;
+    margin-right: 1vw;
+}
+.add_for_type_dev {
+    display: inline-block;
+    margin-left: 1vw;
+    margin-right: 1vw;
+}
+.add_for_info_dev {
+   
+    width:70%;
+    display:inline-block;
+    text-align:center;
+}
+.add_for_info_dev_div {
+    display: flex;
+    align-items: center;
+    margin-top: 3vh;
+    font-size: calc(12px + 0.6vw);
+}
+.add_for_info_dev_div label {
+        flex: 0 0 10vw; /* Фиксированная ширина label */
+        text-align: right;
+        margin-right: 10px;
+        display: inline-block;
+    }
+.add_for_info_dev_div textarea {
+        flex: 1;
+        min-height: 100px;
+        resize: vertical;
+        border-radius: 20px;
+    }
+.settings_add_new_dev_select {
+}
+.add_for_info_dev_create_btn {
+    margin-top: 3vh;
+    background-color:lightgreen;
+    border:0.15vw solid black;
+    font-weight:600;
+    font-size: calc(14px + 0.9vw);
+    padding-left: 2vw;
+    padding-right: 2vw;
+    padding-top: 1vw;
+    padding-bottom: 1vw;
+    border-color:black;
+    border-radius:20px;
+
+}
+
+
+
+.for_add {
+    text-align: center;
+}
+
+.red_for_hub {
+    display: inline-block;
+    margin-left: 1vw;
+    margin-right: 1vw;
+}
+
+.red_for_org {
+    display: inline-block;
+    margin-left: 1vw;
+    margin-right: 1vw;
+}
+
+.red_for_type_dev {
+    display: inline-block;
+    margin-left: 1vw;
+    margin-right: 1vw;
+}
+
+.red_for_info_dev {
+    width: 70%;
+    display: inline-block;
+    text-align: center;
+}
+
+.red_for_info_dev_div {
+    display: flex;
+    align-items: center;
+    margin-top: 3vh;
+    font-size: calc(12px + 0.6vw);
+}
+
+    .red_for_info_dev_div label {
+        flex: 0 0 10vw; /* Фиксированная ширина label */
+        text-align: right;
+        margin-right: 10px;
+        display: inline-block;
+    }
+
+    .red_for_info_dev_div textarea {
+        flex: 1;
+        min-height: 100px;
+        resize: vertical;
+        border-radius: 20px;
+    }
+
+.settings_red_new_dev_select {
+}
+
+.red_for_info_dev_create_btn {
+    margin-top: 3vh;
+    background-color: lightgreen;
+    border: 0.15vw solid black;
+    font-weight: 600;
+    font-size: calc(14px + 0.9vw);
+    padding-left: 2vw;
+    padding-right: 2vw;
+    padding-top: 1vw;
+    padding-bottom: 1vw;
+    border-color: black;
+    border-radius: 20px;
+}
+.list_for_edit_dev_prog
+{
+    font-size:calc(12px + 0.6vw);
+    margin-top:3vh;
+}
+.settings_edit_div p {
+    font-weight: 600;
+    font-size: calc(14px + 0.6vw);
+    margin-left: 1vw;
+    margin-right: 1vw;
+}
+.settings_edit_div button {
+    font-weight: 600;
+    font-size: calc(14px + 0.6vw);
+    margin-left: 1vw;
+    margin-right: 1vw;
+}
+.settings_edit_div
+{
+    margin-top:3vh;
+    margin-bottom:3vh;
+    display:flex;
+    justify-content:center;
+}
+   
+
+    .multi-line {
+        min-height: 100px; /* Минимальная высота textarea */
+        resize: vertical; /* Разрешаем изменение размера только по вертикали */
+    }

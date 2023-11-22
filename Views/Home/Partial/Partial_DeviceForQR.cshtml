@@ -1,0 +1,39 @@
+﻿
+<div id="Part_dev_name" class="Part_dev_name">Налаштування приладів або програм</div>
+<div class="Part_dev_buttons">
+    <div class="Part_dev_but_red" onclick="settings_red_dev()">Редагувати</div>
+    <div class="Part_dev_but_add" onclick="settings_add_new_dev()">Додати</div>
+</div>
+<div id="Part_dev_result" class="Part_dev_result">
+    <div id="for_red" class="for_red" style="display:none">
+        <div id="red_for_hub" class="red_for_hub"></div>
+        <div id="red_for_org" class="red_for_org">
+            <select id="settings_red_new_dev_select_it_organization" class="drop_down">
+                <option value="-1">Підприємство Хабу</option>
+
+                <!-- Добавьте остальные варианты для организации -->
+            </select>
+
+        </div>
+        <div id="red_for_type_dev" class="red_for_type_dev"></div>
+        <div id="list_for_edit_dev_prog" class="list_for_edit_dev_prog"></div>
+    </div>
+
+
+    </div>
+    <div id="for_add" class="for_add" style="display:none">
+        <div id="add_for_hub" class="add_for_hub"></div>
+        <div id="add_for_org" class="add_for_org">
+            <select id="settings_add_new_dev_select_it_organization" class="drop_down">
+                <option value="-1">Підприємство Хабу</option>
+
+                <!-- Добавьте остальные варианты для организации -->
+            </select>
+
+        </div>
+        <div id="add_for_type_dev" class="add_for_type_dev"></div>
+        <br />
+        <div id="add_for_info_dev" class="add_for_info_dev" ></div>
+    </div>
+  
+</div>

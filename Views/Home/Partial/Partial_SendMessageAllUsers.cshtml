@@ -1,0 +1,74 @@
+﻿<div class="container">
+    <h1>Відправити повідомленя всім користувачам бота</h1>
+    <div>
+        <label for="message">Повідомленя:</label>
+        <textarea id="message" rows="5"></textarea>
+    </div>
+    <button onclick="sendMessage()">Відправити</button>
+    <div id="result_send"></div>
+</div>
+
+
+
+
+<style>
+
+   
+.container {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+h1 {
+    color: #333;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    color: #555;
+}
+
+textarea {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+    margin-bottom: 16px;
+}
+
+button {
+    background-color: #4caf50;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+</style>
+<script>
+    function sendMessage() {
+        const message = document.getElementById('message').value;
+        $.ajax({
+            type: "POST",
+            url: 'SendMessageAllUsers',
+            data: ({ text: message }),
+            success: function (res) {
+                $("#result_send").html(res);
+            }
+        });
+       
+
+
+    }
+
+
+</script>

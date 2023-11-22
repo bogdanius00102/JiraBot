@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--
+https://go.microsoft.com/fwlink/?LinkID=208121.
+-->
+<Project>
+  <PropertyGroup>
+    <_PublishTargetUrl>C:\Visual studio\KernelHelpBot\KernelHelpBot\bin\Release\net6.0\publish\</_PublishTargetUrl>
+    <History>True|2023-11-20T16:24:56.1944979Z;True|2023-11-20T18:13:39.2225856+02:00;</History>
+    <LastFailureDetails />
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,77 @@
+﻿
+
+<div class="create_qr_text">Згенерувати QR</div>
+<div class="create_qr_org_text" id="create_qr_org_text">Обери IT ХАБ, Підприємство та тип обладнанння</div>
+
+
+
+<div class="drop_downs">
+<div class="drop_down-container">
+        <select onchange="updateIT_Hub_CREATEQR()" id="itHubDropdown" class="drop_down">
+            <option  value="-1">Обери свій IT ХАБ</option>
+        @for (int i = 0; i < ViewBag.list_hubs.Count; i++)
+        {
+            <option value="@ViewBag.list_hubs[i].id">@ViewBag.list_hubs[i].name</option>
+        }
+        <!-- Добавьте остальные варианты для IT Hub -->
+    </select>
+
+    <select id="organizationDropdown" class="drop_down">
+        <option  value="-1">Підприємство Хабу</option>
+      
+        <!-- Добавьте остальные варианты для организации -->
+    </select>
+
+        <select onchange="updateIT_Hub_CREATEQR()" id="equipmentDropdown" class="drop_down">
+            <option  value=" -1">Тип приладу</option>
+            @for (int i = 0; i < @ViewBag.list_type_dev_or_progr.Count; i++)
+            {
+                <option value="@ViewBag.list_type_dev_or_progr[i].id">@ViewBag.list_type_dev_or_progr[i].name</option>
+            }
+     
+        <!-- Добавьте остальные варианты для типа оборудования -->
+    </select>
+
+    <button onclick="searchforQR_generate()" class="search-button">ПОИСК</button>
+</div>
+
+</div>
+
+
+<div id="result_partial_for_qr_generate"></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@*
+<div class="create_qr_organizations">
+    @for (int i = 0; i < Model.Count; i++)
+    {
+        <div class="create_qr_org" onclick="ajax_click_organizationForCreateQR('@Model[i].id','@Model[i].name')">@Model[i].name</div>
+    }
+
+</div>
+
+<div class="create_qr_result" id="ForSelectOrganization"></div>
+
+*@
