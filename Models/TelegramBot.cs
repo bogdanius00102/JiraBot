@@ -4,10 +4,12 @@ using KernelHelpBot.Models.Databases;
 using KernelHelpBot.Models.JiraRequest;
 using KernelHelpBot.Models.TechniksInformation;
 using Microsoft.VisualBasic;
+using MySqlX.XDevAPI.Common;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
+using static System.Net.Mime.MediaTypeNames;
 using User = KernelHelpBot.Models.People_Information.User;
 namespace KernelHelpBot.Models
 {
@@ -231,9 +233,18 @@ namespace KernelHelpBot.Models
                
                 User u = db.getUserBytelegramId(e.CallbackQuery.From.Id);
                 await Bot.AnswerCallbackQueryAsync(e.CallbackQuery.Id, "Створюємо заявку!");
-               // return;
-                ResponseOnCreateJiraTask result = Jira.CreateNewTask(problem.type_Device_And_Programs.name + " " + problem.text_problem, text_message, u.email, "2nd Line Research And Development").Result;
+                // return;
+                ResponseOnCreateJiraTask result;
+               if (u.email!=null && u.email!="")
+                    result = Jira.CreateNewTask(problem.type_Device_And_Programs.name + " " + problem.text_problem, text_message, u.email, "2nd Line Research And Development").Result;
+                else
+                {
+                    string text = text_message+"\nКористувач: " + u.name + " " + u.surname + " " + u.telegram_data.phone_number + " WorkPosition: " + u.work_position + "\nTelegramId: " + u.telegram_data.telegram_id;
 
+                    result = Jira.CreateNewTask(problem.type_Device_And_Programs.name + " " + problem.text_problem, text, "t-bot_sd@kernel.ua", "2nd Line Research And Development").Result;
+
+                
+                }
                 if (result!=null)
                 {
                   
@@ -317,6 +328,7 @@ namespace KernelHelpBot.Models
 
                 u.telegram_data.phone_number = phone;
                 //  u = ActiveDirectory.UpdateUserByPhoneNumber(u);
+
                 u = RequestTo1cApi.SearchUser(u).Result;
                 if (u.name == null || u.name == "") { NetPravNaBota(e);return; }
                 bool addNewUser = db.AddOrUpdateUser(u);
@@ -349,6 +361,8 @@ namespace KernelHelpBot.Models
             if (db.Update_options_for_create_task(e.Message.From.Id, e.Message.Text).Result==true)
             await Bot.SendTextMessageAsync(e.Message.From.Id, SendText,  parseMode: ParseMode.Html);
         }
+
+
          static async void Text_For_Create_New_Request(Update e)
         {
             string tema = db.Get_options_for_create_task(e.Message.From.Id).Result;
@@ -358,8 +372,16 @@ namespace KernelHelpBot.Models
                 User u = db.getUserBytelegramId(e.Message.From.Id);
                
                bool res= db.Update_options_for_create_task(e.Message.From.Id, "").Result;
-            //      return;
-                ResponseOnCreateJiraTask result = Jira.CreateNewTask(tema,text,u.email, "2nd Line Research And Development").Result;
+                //      return;
+                ResponseOnCreateJiraTask result;
+                if (u.email != "" && u.email != null)
+                    result = Jira.CreateNewTask(tema, text, u.email, "2nd Line Research And Development").Result;
+                else
+                {
+                 
+                    text += "\nКористувач: " + u.name + " " + u.surname + " " + u.telegram_data.phone_number + " WorkPosition: "+u.work_position+"\nTelegramId: " + u.telegram_data.telegram_id;
+                    result = Jira.CreateNewTask(tema, text, "t-bot_sd@kernel.ua", "2nd Line Research And Development").Result;
+                }
                 if (result != null)
                 {
                  
@@ -458,7 +480,18 @@ namespace KernelHelpBot.Models
 
                         var inlinekeyboard = new InlineKeyboardMarkup(new[]
                         {
-                              new[]    {        InlineKeyboardButton.WithUrl("Переглянути", "https://sd.kernel.ua/plugins/servlet/theme/portal/2/" + jiraIssues.issues[i].key),}});
+                              new[]    {    
+                           //  InlineKeyboardButton.WithUrl("Переглянути", "https://sd.kernel.ua/plugins/servlet/theme/portal/2/" + jiraIssues.issues[i].key),
+                              InlineKeyboardButton.WithWebApp("Переглянути",new WebAppInfo() {
+                                  Url="https://sd.kernel.ua/plugins/servlet/theme/portal/2/" + jiraIssues.issues[i].key
+                                                                                                 }
+                                                                )
+                                        } }
+                              );
+
+
+
+
 
                         try
                         {

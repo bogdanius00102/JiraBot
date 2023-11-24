@@ -78,7 +78,7 @@ namespace KernelHelpBot.Models.JiraRequest
 
 
 
-                string jqlQuery = "project = ITSD AND reporter = '" + u.email+ "' AND resolution = unresolved AND issuetype != 'Epic (Проект)'";
+                string jqlQuery = "project = ITSD AND reporter = '" + u.email+ "' AND status in (Open, \"In Progress\", Reopened, \"Waiting for support\", Pending, Escalated, \"Waiting for approval\", \"Work in progress\", \"Awaiting CAB approval\", Planning, Implementing, Assigned, \"Assigned to group\", \"Ожидание выполнения\", \"In Progress contractor\", \"Transferred to contractor\", \"Awaiting fin CAB\", \"Cmdb owner approval\") AND issuetype != 'Epic (Проект)'";
 
 
 

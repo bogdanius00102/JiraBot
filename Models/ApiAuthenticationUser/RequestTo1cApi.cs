@@ -15,6 +15,7 @@ namespace KernelHelpBot.Models.ApiAuthenticationUser
             string username = "zuptbot";
             string password = "tbot@2023!!TBOT";
             string server_id = "wso2ei-node2|ZVtae|ZVtXq";
+           
             using (var httpClient = new HttpClient())
             {
                 var byteArray = System.Text.Encoding.UTF8.GetBytes($"{username}:{password}");
@@ -22,11 +23,11 @@ namespace KernelHelpBot.Models.ApiAuthenticationUser
 
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", base64Credentials);
                 httpClient.DefaultRequestHeaders.Add("Cookie", "SERVERID=" + server_id);
-
+               
                 try
                 {
                     HttpResponseMessage response = await httpClient.GetAsync(apiUrl);
-
+                    Console.WriteLine(response.StatusCode);
                     if (response.IsSuccessStatusCode)
                     {
                         string responseContent = await response.Content.ReadAsStringAsync();
