@@ -2,6 +2,7 @@
 using KernelHelpBot.Models.ApiAuthenticationUser;
 using KernelHelpBot.Models.Databases;
 using KernelHelpBot.Models.JiraRequest;
+using KernelHelpBot.Models.People_Information;
 using KernelHelpBot.Models.TechniksInformation;
 using Microsoft.VisualBasic;
 using MySqlX.XDevAPI.Common;
@@ -18,15 +19,16 @@ namespace KernelHelpBot.Models
 
         static TelegramBotClient Bot;
         static string FirstTextMessage = "Раді тебе бачити. Надішліть мені номер телефону, щоб я побачив хто ви";
-        //static Database db = new Database("server=localhost;user=root;database=kernelhelpbot;password=toor;charset=utf8;");
-        static Database db = new Database("server=localhost;user=root;database=kernelhelpbot;password=P@ssw0rd$D;charset=utf8;");
+        static Database db = new Database("server=localhost;user=root;database=kernelhelpbot;password=toor;charset=utf8;");
+        static TimeSpan TimeForCreateTaskInNotWorkingTime = new TimeSpan(10, 45, 0);
+        //static Database db = new Database("server=localhost;user=root;database=kernelhelpbot;password=P@ssw0rd$D;charset=utf8;");
         public TelegramBot()
         {
             //kernelhelp
             //itsd
 
-           // Bot = new TelegramBotClient("6382587286:AAGwGAaNmKMy-oD-wzqtihpFe_3oI2TZlf0");
-            Bot = new TelegramBotClient("6939260864:AAH-IALzUbpfoAdQQwxPFVQpmyZWCF2s6Wk");
+            Bot = new TelegramBotClient("6382587286:AAGwGAaNmKMy-oD-wzqtihpFe_3oI2TZlf0");
+           // Bot = new TelegramBotClient("6939260864:AAH-IALzUbpfoAdQQwxPFVQpmyZWCF2s6Wk");
             Bot.StartReceiving(Update, Error);
         }
        public  async static Task<bool> SendMessageAllUsers(string text)
@@ -161,13 +163,13 @@ namespace KernelHelpBot.Models
                     { bool res = db.Update_options_for_create_task(e.Message.From.Id, "").Result; }
                     Dovidnuk(e);
                     return;
-                case "Мої заявки":
+                case "Мої запити":
                     { bool res = db.Update_options_for_create_task(e.Message.From.Id, "").Result; }
                     MyNoResolvedRequest(e);
                     return;
-                case "Заявка по QR коду":
+                case "Запит по QR коду":
                     { bool res = db.Update_options_for_create_task(e.Message.From.Id, "").Result; }
-                    await Bot.SendTextMessageAsync(e.Message.From.Id, "Відскануйте відповідний QR код, для автоматичного створення заявки.");
+                    await Bot.SendTextMessageAsync(e.Message.From.Id, "Відскануйте відповідний QR код, для автоматичного створення запиту.");
                     return;
 
 
@@ -200,13 +202,13 @@ namespace KernelHelpBot.Models
                                            {
 
                                                  new KeyboardButton ("Я тільки спитати"),
-                                                 new KeyboardButton ("Заявка по QR коду"),
+                                                 new KeyboardButton ("Запит по QR коду"),
 
                                             },
 
                                         new []
                                            {
-                                                new KeyboardButton ("Мої заявки"),
+                                                new KeyboardButton ("Мої запити"),
                                                     new KeyboardButton ("Довідник"),
 
                                             },
@@ -223,21 +225,41 @@ namespace KernelHelpBot.Models
             }
 
         }
-         static async void ForCallbackQuery(Update e)////////////////////////Создает заявки на РНД
+         static async void ForCallbackQuery(Update e)////////////////////////Создает запити на РНД
         {
             if (e.CallbackQuery.Data.Contains("Inl_kb_problemId:"))
             {
                 string text_message = e.CallbackQuery.Message.Text;
-                text_message = text_message.Replace("Створення заявки.","");
+                text_message = text_message.Replace("Створення запиту.","");
                 text_message = text_message.Replace("Оберіть підходящий варіант проблеми", "");
                 string callb_data = e.CallbackQuery.Data;
-                int problem_id = Convert.ToInt32(callb_data.Replace("Inl_kb_problemId:",""));
+                string[] parts = callb_data.Split(new char[] { ',', ':' });
+
+                int inlKbProblemId = 0;
+                int organizationId = 0;
+
+                // Поиск значений для Inl_kb_problemId и organizationId
+                for (int i = 0; i < parts.Length; i++)
+                {
+                    if (parts[i].Trim() == "Inl_kb_problemId")
+                    {
+                        inlKbProblemId = Convert.ToInt32( parts[i + 1]);
+                    }
+                    else if (parts[i].Trim() == "organizationId")
+                    {
+                        organizationId =Convert.ToInt32( parts[i + 1]);
+                    }
+                }
                 
-                Problem_for_type_device_and_programs problem = db.GetProblems_device_and_programsByProblemId(problem_id);
                
+                
+                Problem_for_type_device_and_programs problem = db.GetProblems_device_and_programsByProblemId(inlKbProblemId);
+                if (problem == null) return;
                 User u = db.getUserBytelegramId(e.CallbackQuery.From.Id);
-                await Bot.AnswerCallbackQueryAsync(e.CallbackQuery.Id, "Створюємо заявку!");
-                // return;
+                await Bot.AnswerCallbackQueryAsync(e.CallbackQuery.Id, "Створюємо запит!");
+                IT_HUB this_hub = db.Get_IT_HUB_BY_ORGANIZATION_ID(organizationId).Result;
+                //return;
+              //  12345
                 ResponseOnCreateJiraTask result;
                if (u.email!=null && u.email!="")
                     result = Jira.CreateNewTask(problem.type_Device_And_Programs.name + " " + problem.text_problem, text_message, u.email, "2nd Line Research And Development").Result;
@@ -254,8 +276,13 @@ namespace KernelHelpBot.Models
                   
                     string url_create_task = "https://sd.kernel.ua/plugins/servlet/theme/portal/2/" + result.key;
 
-                    await Bot.EditMessageTextAsync(e.CallbackQuery.From.Id, e.CallbackQuery.Message.MessageId, "ЗАЯВКА СТВОРЕНА: <b>" + result.key + "</b>\n" + problem.type_Device_And_Programs.name + " " + problem.text_problem +"\n"+ text_message, parseMode: ParseMode.Html,replyMarkup:new InlineKeyboardMarkup(new InlineKeyboardButton[] {InlineKeyboardButton.WithWebApp(""+result.key,new WebAppInfo() { Url=url_create_task}) }));
-                
+                    await Bot.EditMessageTextAsync(e.CallbackQuery.From.Id, e.CallbackQuery.Message.MessageId, "ЗАПИТ СТВОРЕН: <b>" + result.key + "</b>\n" + problem.type_Device_And_Programs.name + " " + problem.text_problem +"\n"+ text_message, parseMode: ParseMode.Html,replyMarkup:new InlineKeyboardMarkup(new InlineKeyboardButton[] {InlineKeyboardButton.WithWebApp(""+result.key,new WebAppInfo() { Url=url_create_task}) }));
+                    DateTime currentTime = DateTime.Now;
+
+                    if (currentTime.TimeOfDay > TimeForCreateTaskInNotWorkingTime)
+                    {
+                        await Bot.SendTextMessageAsync(e.CallbackQuery.From.Id, "Запит створений у неробочий час. Якщо проблема критична і впливає на виробничі процеси - будь-ласка, зателефонуйте відповідальному ІТ фахівцію: " + this_hub.otvetstvenniy+" " +this_hub.phone_number);
+                    }
                 }
                 else
                 {
@@ -355,7 +382,7 @@ namespace KernelHelpBot.Models
 
          static async void CreateNewRequest(Update e)
         {
-            string SendText = "Створення нової заявки '<b>"+e.Message.Text+ "</b>'.\n";
+            string SendText = "Створення нового запиту '<b>"+e.Message.Text+ "</b>'.\n";
             switch(e.Message.Text)
             {
                 case "Щось не працює": SendText += "Опишіть детально що саме не працює та при яких діях проявляється помилка"; break;
@@ -371,7 +398,7 @@ namespace KernelHelpBot.Models
         {
             string tema = db.Get_options_for_create_task(e.Message.From.Id).Result;
             string text = e.Message.Text;
-            if(text!= "Щось не працює" && text != "Я тільки спитати" && text != "Замовити обладнання" && text != "Заявка по QR коду" && text != "Мої заявки" && text != "Довідник")
+            if(text!= "Щось не працює" && text != "Я тільки спитати" && text != "Замовити обладнання" && text != "Запит по QR коду" && text != "Мої запити" && text != "Довідник")
             {
                 User u = db.getUserBytelegramId(e.Message.From.Id);
                
@@ -390,12 +417,12 @@ namespace KernelHelpBot.Models
                 {
                  
                     string url_create_task = "https://sd.kernel.ua/plugins/servlet/theme/portal/2/" + result.key;
-                    Console.WriteLine("СОЗДАЛАСЬ ЗАЯВКА\n" + tema + " : " + text+"\n"+url_create_task);
+                    Console.WriteLine("Створений  Запит\n" + tema + " : " + text+"\n"+url_create_task);
                     try
                     {
                         await Bot.SendTextMessageAsync(
                             chatId: e.Message.From.Id, 
-                            text: "ЗАЯВКА СТВОРЕНА: <b>" + result.key + "</b>\n"
+                            text: "Запит СТВОРЕНА: <b>" + result.key + "</b>\n"
                         + tema + "\n" + text, 
                             parseMode: ParseMode.Html,
                             replyMarkup: new InlineKeyboardMarkup(new InlineKeyboardButton[] { InlineKeyboardButton.WithWebApp("" + result.key, new WebAppInfo() { Url = url_create_task }) }),
@@ -429,12 +456,17 @@ namespace KernelHelpBot.Models
             int Device_and_ProgramsId = Convert.ToInt32(e.Message.Text.Replace("/start QRProblemDevice_and_Programs_id_", ""));
 
             Device_and_Programs this_Device_and_Programs = db.GetDevice_and_Programs(Device_and_ProgramsId);
-           
+
+            if (this_Device_and_Programs == null)
+            {
+                await Bot.SendTextMessageAsync(e.Message.From.Id, "Не знайдено інформації по QR коду.");
+                Console.WriteLine(  "Не найдено информации по qr: "+ Device_and_ProgramsId+"\n Пользователь "+e.Message.From.Id+" отправил: "+e.Message.Text);
+                return;
+            }
 
 
 
-
-            string msg = "Створення заявки.\n\n" + this_Device_and_Programs.type_Device_And_Programs.name+" "+ this_Device_and_Programs.name+ " \n" +this_Device_and_Programs.description+"\n" 
+            string msg = "Створення запиту.\n\n" + this_Device_and_Programs.type_Device_And_Programs.name+" "+ this_Device_and_Programs.name+ " \n" +this_Device_and_Programs.description+"\n" 
                 + "\nОберіть підходящий варіант проблеми";
             InlineKeyboardButton[][] inlineKeyboardButtons;
           
@@ -449,7 +481,7 @@ namespace KernelHelpBot.Models
                
 
 
-                inlineKeyboardButtons[i][0] =  InlineKeyboardButton.WithCallbackData  (text: this_Device_and_Programs.list_problems[i].text_problem, callbackData: "Inl_kb_problemId:"+this_Device_and_Programs.list_problems[i].id);
+                inlineKeyboardButtons[i][0] =  InlineKeyboardButton.WithCallbackData  (text: this_Device_and_Programs.list_problems[i].text_problem, callbackData: "Inl_kb_problemId:"+this_Device_and_Programs.list_problems[i].id+",organizationId:"+this_Device_and_Programs.assigned_organization.id);
             }
 
 
@@ -468,7 +500,7 @@ namespace KernelHelpBot.Models
 
          static async void MyNoResolvedRequest(Update e)
         {
-            await Bot.SendTextMessageAsync(e.Message.From.Id, "Шукаю ваши заявки");
+            await Bot.SendTextMessageAsync(e.Message.From.Id, "Шукаю ваши запити");
            
             JiraIssues jiraIssues = Jira.GetRequestOfuser(db.getUserBytelegramId(e.Message.From.Id)).Result;
             if(jiraIssues != null ) 

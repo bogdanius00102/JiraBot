@@ -6,5 +6,6 @@
         public string name { get; set; }
         public List<Organization> organizations { get; set; }
         public string otvetstvenniy { get; set; }
+        public string phone_number { get; set; }
     }
 }

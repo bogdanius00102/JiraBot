@@ -624,6 +624,42 @@ namespace KernelHelpBot.Models.Databases
             }
             return null;
         }
+        public async Task<IT_HUB> Get_IT_HUB_BY_ORGANIZATION_ID(int id)
+        {
+            try
+            {
+                IT_HUB hub = null;
+                MySqlConnection connection = new MySqlConnection(path);
+                connection.Open();
 
+                string sql_zapros1 = "SELECT id_hub FROM organization WHERE id='"+id+"';";
+                MySqlCommand command = new MySqlCommand(sql_zapros1, connection);
+                int id_hub =  Convert.ToInt32(command.ExecuteScalarAsync().Result);
+
+                sql_zapros1 = "SELECT id, name, otvetstvenniy,phone_number FROM kernelhelpbot.it_hub WHERE id = '" + id_hub + "';";
+
+                 command = new MySqlCommand(sql_zapros1, connection);
+                MySqlDataReader reader = command.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    hub = new IT_HUB();
+                    hub.id = Convert.ToInt32(reader[0]);
+                    hub.name = reader[1].ToString();
+                    hub.otvetstvenniy = reader[2].ToString();
+                    hub.phone_number = reader[3].ToString();
+
+                }
+                connection.Close();
+
+                return hub;
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            return null;
+        }
     }
 }
