@@ -4,7 +4,7 @@ function generateQR150(text) {
 
     let size = 150;
    
-        var data = 'https://telegram.me/HelpKernel_bot?start=QRProblemDevice_and_Programs_id_' + text;
+        var data = 'https://telegram.me/KD_ITSD_bot?start=QRProblemDevice_and_Programs_id_' + text;
 
     var img = '<img style="margin: 0 auto" src="https://chart.googleapis.com/chart?chs=' + size + 'x' + size + '&cht=qr&chl=' + data + '">';
 
@@ -15,7 +15,7 @@ function generateQR300(text) {
 
     let size = 300;
 
-    var data = 'https://telegram.me/HelpKernel_bot?start=QRProblemDevice_and_Programs_id_' + text;
+    var data = 'https://telegram.me/KD_ITSD_bot?start=QRProblemDevice_and_Programs_id_' + text;
 
     var img = '<img alter="image" style="margin: 0 auto" src="https://chart.googleapis.com/chart?chs=' + size + 'x' + size + '&cht=qr&chl=' + data + '">';
 
@@ -26,7 +26,7 @@ function generateQR500(text) {
 
     let size = 500;
 
-    var data = 'https://telegram.me/HelpKernel_bot?start=QRProblemDevice_and_Programs_id_' + text;
+    var data = 'https://telegram.me/KD_ITSD_bot?start=QRProblemDevice_and_Programs_id_' + text;
 
     var img = '<img style="margin: 0 auto" src="https://chart.googleapis.com/chart?chs=' + size + 'x' + size + '&cht=qr&chl=' + data + '">';
 

@@ -1,6 +1,7 @@
 using KernelHelpBot.Models;
 using KernelHelpBot.Models.JiraRequest;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.HttpOverrides;
 
 namespace KernelHelpBot
 {
@@ -19,7 +20,10 @@ namespace KernelHelpBot
         });
           
             var app = builder.Build();
-
+            app.UseForwardedHeaders(new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+            });
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
             {

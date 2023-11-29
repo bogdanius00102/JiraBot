@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "P9+bpNk+96cM6NE7T0gwIIbUI8guQEsZM5KBro2ZHE+bhOZ/UlbmYpK6V7rIm13K+8xVBwL9ER2diT7u72IPcw==",
+  "dgSpecHash": "vC5MyJz1/qyXtydmBA3rD4ckzzzoSPanw/sH360zDZskwHXMtBH5i/ZAfbvLpJHjGiaxTqddB1c7O4vGFUUTEQ==",
   "success": true,
-  "projectFilePath": "C:\\Visual studio\\KernelHelpBot\\KernelHelpBot\\KernelHelpBot.csproj",
+  "projectFilePath": "C:\\Visual studio\\JiraBot\\KernelHelpBot.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Administrator\\.nuget\\packages\\google.protobuf\\3.21.9\\google.protobuf.3.21.9.nupkg.sha512",
     "C:\\Users\\Administrator\\.nuget\\packages\\k4os.compression.lz4\\1.3.5\\k4os.compression.lz4.1.3.5.nupkg.sha512",

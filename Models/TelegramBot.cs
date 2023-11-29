@@ -18,10 +18,14 @@ namespace KernelHelpBot.Models
 
         static TelegramBotClient Bot;
         static string FirstTextMessage = "Раді тебе бачити. Надішліть мені номер телефону, щоб я побачив хто ви";
-        static Database db = new Database("server=localhost;user=root;database=kernelhelpbot;password=toor;charset=utf8;");
+        //static Database db = new Database("server=localhost;user=root;database=kernelhelpbot;password=toor;charset=utf8;");
+        static Database db = new Database("server=localhost;user=root;database=kernelhelpbot;password=P@ssw0rd$D;charset=utf8;");
         public TelegramBot()
         {
-           // Bot = new TelegramBotClient("6382587286:AAGwGAaNmKMy-oD-wzqtihpFe_3oI2TZlf0");KernelHelpBot
+            //kernelhelp
+            //itsd
+
+           // Bot = new TelegramBotClient("6382587286:AAGwGAaNmKMy-oD-wzqtihpFe_3oI2TZlf0");
             Bot = new TelegramBotClient("6939260864:AAH-IALzUbpfoAdQQwxPFVQpmyZWCF2s6Wk");
             Bot.StartReceiving(Update, Error);
         }

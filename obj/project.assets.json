@@ -1780,11 +1780,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Visual studio\\KernelHelpBot\\KernelHelpBot\\KernelHelpBot.csproj",
+      "projectUniqueName": "C:\\Visual studio\\JiraBot\\KernelHelpBot.csproj",
       "projectName": "KernelHelpBot",
-      "projectPath": "C:\\Visual studio\\KernelHelpBot\\KernelHelpBot\\KernelHelpBot.csproj",
+      "projectPath": "C:\\Visual studio\\JiraBot\\KernelHelpBot.csproj",
       "packagesPath": "C:\\Users\\Administrator\\.nuget\\packages\\",
-      "outputPath": "C:\\Visual studio\\KernelHelpBot\\KernelHelpBot\\obj\\",
+      "outputPath": "C:\\Visual studio\\JiraBot\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\Administrator\\AppData\\Roaming\\NuGet\\NuGet.Config",

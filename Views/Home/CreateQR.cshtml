@@ -22,7 +22,7 @@
         <!-- Добавьте остальные варианты для организации -->
     </select>
 
-        <select onchange="updateIT_Hub_CREATEQR()" id="equipmentDropdown" class="drop_down">
+        <select  id="equipmentDropdown" class="drop_down">
             <option  value=" -1">Тип приладу</option>
             @for (int i = 0; i < @ViewBag.list_type_dev_or_progr.Count; i++)
             {
