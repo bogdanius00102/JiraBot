@@ -13,25 +13,19 @@ namespace KernelHelpBot.Models.JiraRequest
         static string password = "TB0tforJSD16102024";
         public static async Task<ResponseOnCreateJiraTask> CreateNewTask(string tema,string text,string avtor,string groops)
         {
-            text = text.Replace("\n", "\\n");
-            string issueJson = "{ " +
-                "\"fields\": " +
-                "{ " +
-                 "\"project\":" +
-                 " { " +
-                 "\"key\": \"ITSD\" }," +
-                  " \"summary\": \""+ tema + "\", " +
-                  "\"description\": \"" + text + "\", " +
-                   "\"issuetype\": { \"name\": \"Service Request\" }," +
-                  " \"customfield_10300\": [{\"name\":\""+groops+"\"}]," +
+            string escapedText = text.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "\\r");
 
-                   "\"labels\": [\"TELEGRAM_BOT\",\"KERNEL_HELP_BOT\"]," +
-
-
-                   "\"reporter\": " +
-                    "{ \"name\": \""+ avtor + "\" }" +
-                  " } " +
-                "}";
+            string issueJson = @"{
+    ""fields"": {
+        ""project"": { ""key"": ""ITSD"" },
+        ""summary"": ""Принтери, БФП, сканери Заміна картриджу"",
+        ""description"": """ + escapedText + @""",
+        ""issuetype"": { ""name"": ""Service Request"" },
+        ""customfield_10300"": [{""name"":""2nd Line Research And Development""}],
+        ""labels"": [""TELEGRAM_BOT"",""KERNEL_HELP_BOT""],
+        ""reporter"": { ""name"": ""b.doroshkov@kernel.ua"" }
+    }
+}";
 
 
             using (var client = new HttpClient())

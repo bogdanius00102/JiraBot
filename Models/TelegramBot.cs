@@ -19,9 +19,9 @@ namespace KernelHelpBot.Models
 
         static TelegramBotClient Bot;
         static string FirstTextMessage = "Раді тебе бачити. Надішліть мені номер телефону, щоб я побачив хто ви";
-        static Database db = new Database("server=localhost;user=root;database=kernelhelpbot;password=toor;charset=utf8;");
-        static TimeSpan TimeForCreateTaskInNotWorkingTime = new TimeSpan(10, 45, 0);
-        //static Database db = new Database("server=localhost;user=root;database=kernelhelpbot;password=P@ssw0rd$D;charset=utf8;");
+        //static Database db = new Database("server=localhost;user=root;database=kernelhelpbot;password=toor;charset=utf8;");
+        static TimeSpan TimeForCreateTaskInNotWorkingTime = new TimeSpan(17, 45, 0);
+        static Database db = new Database("server=localhost;user=root;database=kernelhelpbot;password=P@ssw0rd$D;charset=utf8;");
         public TelegramBot()
         {
             //kernelhelp

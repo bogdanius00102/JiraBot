@@ -15,8 +15,8 @@ namespace KernelHelpBot.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
-        //static Database db = new Database("server=localhost;user=root;database=kernelhelpbot;password=toor;charset=utf8;");
-        static Database db = new Database("server=localhost;user=root;database=kernelhelpbot;password=P@ssw0rd$D;charset=utf8;");
+        static Database db = new Database("server=localhost;user=root;database=kernelhelpbot;password=toor;charset=utf8;");
+      //  static Database db = new Database("server=localhost;user=root;database=kernelhelpbot;password=P@ssw0rd$D;charset=utf8;");
 
         public HomeController(ILogger<HomeController> logger)
         {
