@@ -19,8 +19,8 @@ namespace KernelHelpBot.Models
 
         static TelegramBotClient Bot;
         static string FirstTextMessage = "Раді Вас бачити. Натисніть \"Поділитися номером телефону\", щоб я побачив хто Ви.";
-        static Database db = new Database("server=localhost;user=root;database=kernelhelpbot;password=toor;charset=utf8mb4;");
-        static TimeSpan TimeForCreateTaskInNotWorkingTime = new TimeSpan(17, 45, 0);
+        static Database db = new Database("server=localhost;user=root;database=kernelhelpbot;password=toor;charset=utf8mb4;;");
+        static TimeSpan TimeForCreateTaskInNotWorkingTime = new TimeSpan(18, 01, 0);
       //  static Database db = new Database("server=localhost;user=root;database=kernelhelpbot;password=P@ssw0rd$D;charset=utf8;");
         public TelegramBot()
         {
@@ -423,7 +423,7 @@ namespace KernelHelpBot.Models
                     {
                         await Bot.SendTextMessageAsync(
                             chatId: e.Message.From.Id, 
-                            text: "Запит СТВОРЕНА: <b>" + result.key + "</b>\n"
+                            text: "Запит створен: <b>" + result.key + "</b>\n"
                         + tema + "\n" + text, 
                             parseMode: ParseMode.Html,
                             replyMarkup: new InlineKeyboardMarkup(new InlineKeyboardButton[] { InlineKeyboardButton.WithWebApp("" + result.key, new WebAppInfo() { Url = url_create_task }) }),

@@ -534,8 +534,17 @@ function ClickAddNewDevice_and_Progrrams() {
                         alert("Не удалось");
                     }
                     else {
+                       
+                        containers.forEach(container => {
+
+
+                            var label = container.querySelector('label');
+                            var textarea = container.querySelector('textarea');
+                            textarea.value = "";
+                        });
                         alert("Удалось, " + result_req);
                     }
+                    
                 }
             });
         }

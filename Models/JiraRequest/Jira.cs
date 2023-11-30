@@ -21,11 +21,22 @@ namespace KernelHelpBot.Models.JiraRequest
         ""summary"":""" + tema + @""",
         ""description"": """ + escapedText + @""",
         ""issuetype"": { ""name"": ""Service Request"" },
-        ""customfield_10300"": [{""name"":""2nd Line Research And Development""}],
+       
         ""labels"": [""TELEGRAM_BOT"",""KD_ITSD_bot""],
         ""reporter"": { ""name"": """ + avtor + @""" }
     }
 }";
+//            string issueJson = @"{
+//    ""fields"": {
+//        ""project"": { ""key"": ""ITSD"" },
+//        ""summary"":""" + tema + @""",
+//        ""description"": """ + escapedText + @""",
+//        ""issuetype"": { ""name"": ""Service Request"" },
+//        ""customfield_10300"": [{""name"":""2nd Line Research And Development""}],
+//        ""labels"": [""TELEGRAM_BOT"",""KD_ITSD_bot""],
+//        ""reporter"": { ""name"": """ + avtor + @""" }
+//    }
+//}";
 
 
             using (var client = new HttpClient())
