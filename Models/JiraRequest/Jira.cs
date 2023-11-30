@@ -18,12 +18,12 @@ namespace KernelHelpBot.Models.JiraRequest
             string issueJson = @"{
     ""fields"": {
         ""project"": { ""key"": ""ITSD"" },
-        ""summary"": ""Принтери, БФП, сканери Заміна картриджу"",
+        ""summary"":""" + tema + @""",
         ""description"": """ + escapedText + @""",
         ""issuetype"": { ""name"": ""Service Request"" },
         ""customfield_10300"": [{""name"":""2nd Line Research And Development""}],
-        ""labels"": [""TELEGRAM_BOT"",""KERNEL_HELP_BOT""],
-        ""reporter"": { ""name"": ""b.doroshkov@kernel.ua"" }
+        ""labels"": [""TELEGRAM_BOT"",""KD_ITSD_bot""],
+        ""reporter"": { ""name"": """ + avtor + @""" }
     }
 }";
 

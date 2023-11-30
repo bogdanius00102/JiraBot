@@ -18,10 +18,10 @@ namespace KernelHelpBot.Models
     {
 
         static TelegramBotClient Bot;
-        static string FirstTextMessage = "Раді тебе бачити. Надішліть мені номер телефону, щоб я побачив хто ви";
-        //static Database db = new Database("server=localhost;user=root;database=kernelhelpbot;password=toor;charset=utf8;");
+        static string FirstTextMessage = "Раді Вас бачити. Натисніть \"Поділитися номером телефону\", щоб я побачив хто Ви.";
+        static Database db = new Database("server=localhost;user=root;database=kernelhelpbot;password=toor;charset=utf8mb4;");
         static TimeSpan TimeForCreateTaskInNotWorkingTime = new TimeSpan(17, 45, 0);
-        static Database db = new Database("server=localhost;user=root;database=kernelhelpbot;password=P@ssw0rd$D;charset=utf8;");
+      //  static Database db = new Database("server=localhost;user=root;database=kernelhelpbot;password=P@ssw0rd$D;charset=utf8;");
         public TelegramBot()
         {
             //kernelhelp
@@ -86,14 +86,14 @@ namespace KernelHelpBot.Models
                              {
                     new[]
                         {
-                              KeyboardButton.WithRequestContact ("Надіслати номер телефону"),
+                              KeyboardButton.WithRequestContact ("Поділитися номером телефону"),
 
 
 
                         }
                                  }));
                         replyKeyboard.ResizeKeyboard = true;
-                        await Bot.SendTextMessageAsync(e.Message.From.Id, "Ви відправили не свій номер телефону. Натисніть на кнопку \"Надіслати номер телефону\"", replyMarkup: replyKeyboard);
+                        await Bot.SendTextMessageAsync(e.Message.From.Id, "Ви відправили не свій номер телефону. Натисніть на кнопку \"Поділитися номером телефону\"", replyMarkup: replyKeyboard);
                         await Console.Out.WriteLineAsync($"{DateTime.Now} {e.Message.From.Id} {e.Message.From.Username} {e.Message.From.FirstName} {e.Message.From.LastName} sendPhone: {e.Message.Contact.PhoneNumber}. Номер телефона не власник цього ТЕЛЕГРАМ акаунту");
 
                     }
@@ -149,21 +149,22 @@ namespace KernelHelpBot.Models
             switch (e.Message.Text)
             {
               
-                case "Я тільки спитати":
+                case "❓ Хочу запитати":
                     CreateNewRequest(e);return;
                    
-                case "Замовити обладнання":
+                case "💻 Хочу замовити обладнання":
                     CreateNewRequest(e);
                     return;
-                case "Щось не працює":
+                case "🔥 У мене не працює":
                     CreateNewRequest(e);
                     return;
 
-                case "Довідник":
+                case "📖 Довідник":
                     { bool res = db.Update_options_for_create_task(e.Message.From.Id, "").Result; }
-                    Dovidnuk(e);
+                    await Bot.SendTextMessageAsync(e.Message.From.Id, "Даний розділ знаходиться в розробці");
+                    //Dovidnuk(e);
                     return;
-                case "Мої запити":
+                case "🗂 Мої запити":
                     { bool res = db.Update_options_for_create_task(e.Message.From.Id, "").Result; }
                     MyNoResolvedRequest(e);
                     return;
@@ -194,22 +195,22 @@ namespace KernelHelpBot.Models
                                               new []
                                            {
 
-                                               new KeyboardButton ("Щось не працює"),
+                                               new KeyboardButton ("🔥 У мене не працює"),
 
-                                               new KeyboardButton ("Замовити обладнання"),
+                                              
                                             },
                                        new []
                                            {
-
-                                                 new KeyboardButton ("Я тільки спитати"),
-                                                 new KeyboardButton ("Запит по QR коду"),
+                                            new KeyboardButton ("💻 Хочу замовити обладнання"),
+                                                 new KeyboardButton ("❓ Хочу запитати"),
+                                              //   new KeyboardButton ("Запит по QR коду"),
 
                                             },
 
                                         new []
                                            {
-                                                new KeyboardButton ("Мої запити"),
-                                                    new KeyboardButton ("Довідник"),
+                                                new KeyboardButton ("🗂 Мої запити"),
+                                                    new KeyboardButton ("📖 Довідник"),
 
                                             },
                                             }
@@ -309,7 +310,7 @@ namespace KernelHelpBot.Models
              {
                     new[]
                         {
-                              KeyboardButton.WithRequestContact ("Надіслати номер телефону"),
+                              KeyboardButton.WithRequestContact ("Поділитися номером телефону"),
 
 
 
@@ -385,9 +386,9 @@ namespace KernelHelpBot.Models
             string SendText = "Створення нового запиту '<b>"+e.Message.Text+ "</b>'.\n";
             switch(e.Message.Text)
             {
-                case "Щось не працює": SendText += "Опишіть детально що саме не працює та при яких діях проявляється помилка"; break;
-                case "Замовити обладнання": SendText += "Опишіть детально яке обладнання чи програмне забезпечення Вам потрібно";  break;
-                case "Я тільки спитати": SendText += "Опишіть детально Ваше питання"; break;
+                case "🔥 У мене не працює": SendText += "Опишіть детально що саме не працює та при яких діях проявляється помилка"; break;
+                case "💻 Хочу замовити обладнання": SendText += "Опишіть детально яке обладнання чи програмне забезпечення Вам потрібно";  break;
+                case "❓ Хочу запитати": SendText += "Опишіть детально Ваше питання"; break;
             }
             if (db.Update_options_for_create_task(e.Message.From.Id, e.Message.Text).Result==true)
             await Bot.SendTextMessageAsync(e.Message.From.Id, SendText,  parseMode: ParseMode.Html);
@@ -398,7 +399,7 @@ namespace KernelHelpBot.Models
         {
             string tema = db.Get_options_for_create_task(e.Message.From.Id).Result;
             string text = e.Message.Text;
-            if(text!= "Щось не працює" && text != "Я тільки спитати" && text != "Замовити обладнання" && text != "Запит по QR коду" && text != "Мої запити" && text != "Довідник")
+            if(text!= "🔥 У мене не працює" && text != "❓ Хочу запитати" && text != "💻 Хочу замовити обладнання" && text != "Запит по QR коду" && text != "🗂 Мої запити" && text != "📖 Довідник")
             {
                 User u = db.getUserBytelegramId(e.Message.From.Id);
                
@@ -500,7 +501,7 @@ namespace KernelHelpBot.Models
 
          static async void MyNoResolvedRequest(Update e)
         {
-            await Bot.SendTextMessageAsync(e.Message.From.Id, "Шукаю ваши запити");
+            await Bot.SendTextMessageAsync(e.Message.From.Id, "Шукаю Ваші запити");
            
             JiraIssues jiraIssues = Jira.GetRequestOfuser(db.getUserBytelegramId(e.Message.From.Id)).Result;
             if(jiraIssues != null ) 
