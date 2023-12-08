@@ -689,5 +689,27 @@ namespace KernelHelpBot.Models.Databases
             }
             return null;
         }
+        public bool UpdateNewOtvetstvenniy (int id_hub, string otv)
+        {
+            try
+            {
+                MySqlConnection connection = new MySqlConnection(path);
+                connection.Open();
+                string request = $"UPDATE `kernelhelpbot`.`it_hub` SET `otvetstvenniy` = '{otv}' WHERE (`id` = '{id_hub}');\r\n";
+                MySqlCommand command = new MySqlCommand(request, connection);
+                int rowsAffected = command.ExecuteNonQuery();
+
+                connection.Close();
+
+                return rowsAffected > 0;
+
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("" + ex.Message);
+                return false;
+            }
+        }
     }
 }

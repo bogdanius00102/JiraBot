@@ -364,6 +364,7 @@
 .EditOtv_div_right {
     margin-left: 5%;
     margin-right: 5%;
+    width:25%;
 }
 #itHubSelect {
     font-size: calc(14px + 0.7vw);
@@ -375,6 +376,7 @@
 }
 #otvetstvenniyInput {
     font-size: calc(14px + 0.7vw);
+   width:100%;
     padding-right: 5%;
     padding-left: 5%;
     padding-top: 1.5vh;
@@ -414,5 +416,5 @@
 }
     .EditOtv_btn_update:hover 
     {
-        color: red;
+        color: Gray;
     }

@@ -138,7 +138,23 @@ function update_settings() {
 }
 
 
-  
+function UpdateNewOtvetstvenniy() {
+
+    var _id_hub = document.getElementById('itHubSelect').value;
+    var _otv = document.getElementById('otvetstvenniyInput').value;
+
+
+    $.ajax({
+        type: "Post",
+        url: 'UpdateNewOtvetstvenniy',
+        data: { id_hub: _id_hub, otv: _otv },
+        success: function (res) {
+            if (res==true)
+                alert("Відповідальний оновлен");
+            else alert("Щось пішло не так");
+        }
+    });
+}
 
 function settings_red_dev() {
     document.getElementById('for_add').style = "display:none";

@@ -142,6 +142,13 @@ namespace KernelHelpBot.Controllers
             if (res == true) return "Відправлено";
             else return "Не відправлено";
         }
+        [HttpPost]
+        public bool UpdateNewOtvetstvenniy(int id_hub, string otv)
+        {
+            bool res = db.UpdateNewOtvetstvenniy(id_hub, otv);
+            return res;
+            return false;
+        }
 
         [HttpPost]
         public int CreateNewDeviseAndProgram(int id_hub, int id_org, int id_type_dev_and_prog, string name, string description)
