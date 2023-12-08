@@ -123,10 +123,22 @@ function update_settings() {
                 }
             });
             break;
+        //Відповідальний у неробочий час
+        case "Відповідальний у неробочий час":
+            $.ajax({
+                type: "Get",
+                url: 'PartialEditOtvetstvenniy',
+                data: {},
+                success: function (html) {
+                    $("#result").html(html);
+                }
+            });
+            break;
     }
 }
 
 
+  
 
 function settings_red_dev() {
     document.getElementById('for_add').style = "display:none";

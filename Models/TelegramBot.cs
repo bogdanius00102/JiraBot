@@ -18,9 +18,10 @@ namespace KernelHelpBot.Models
     {
 
         static TelegramBotClient Bot;
+      //  static long id_admin_chat = -1002006933069;
         static string FirstTextMessage = "Раді Вас бачити. Натисніть \"Поділитися номером телефону\", щоб я побачив хто Ви.";
-        static Database db = new Database("server=localhost;user=root;database=kernelhelpbot;password=toor;charset=utf8mb4;;");
-        static TimeSpan TimeForCreateTaskInNotWorkingTime = new TimeSpan(18, 01, 0);
+        static Database db = new Database("server=localhost;user=root;database=kernelhelpbot;password=toor;charset=utf8mb4;");
+       
       //  static Database db = new Database("server=localhost;user=root;database=kernelhelpbot;password=P@ssw0rd$D;charset=utf8;");
         public TelegramBot()
         {
@@ -42,7 +43,8 @@ namespace KernelHelpBot.Models
                     try
                     {
                         await Bot.SendTextMessageAsync(user.telegram_data.telegram_id, text);
-                        Console.WriteLine($"{user.telegram_data.telegram_id} - Sent");
+                          
+                            Console.WriteLine($"{user.telegram_data.telegram_id} - Sent");
                     }
                     catch (Telegram.Bot.Exceptions.ApiRequestException ex)
                     {
@@ -76,7 +78,8 @@ namespace KernelHelpBot.Models
                     if (e.Message.Contact.UserId == e.Message.From.Id )
                     {
                         await Console.Out.WriteLineAsync($"{DateTime.Now} {e.Message.From.Id} {e.Message.From.Username} {e.Message.From.FirstName} {e.Message.From.LastName} sendPhone: {e.Message.Contact.PhoneNumber}");
-                        if(u==null)
+                       // await Bot.SendTextMessageAsync(id_admin_chat, $"{DateTime.Now} {e.Message.From.Id} {e.Message.From.Username} {e.Message.From.FirstName} {e.Message.From.LastName} sendPhone: {e.Message.Contact.PhoneNumber}");
+                        if (u==null)
                         ForGetContact(e);
                         return;
                     }
@@ -95,12 +98,16 @@ namespace KernelHelpBot.Models
                         replyKeyboard.ResizeKeyboard = true;
                         await Bot.SendTextMessageAsync(e.Message.From.Id, "Ви відправили не свій номер телефону. Натисніть на кнопку \"Поділитися номером телефону\"", replyMarkup: replyKeyboard);
                         await Console.Out.WriteLineAsync($"{DateTime.Now} {e.Message.From.Id} {e.Message.From.Username} {e.Message.From.FirstName} {e.Message.From.LastName} sendPhone: {e.Message.Contact.PhoneNumber}. Номер телефона не власник цього ТЕЛЕГРАМ акаунту");
-
+                       // await Bot.SendTextMessageAsync(id_admin_chat, $"{DateTime.Now} {e.Message.From.Id} {e.Message.From.Username} {e.Message.From.FirstName} {e.Message.From.LastName} sendPhone: {e.Message.Contact.PhoneNumber}. Номер телефона не власник цього ТЕЛЕГРАМ акаунту");
                     }
 
                 }
                 if (e.Message.Text != null)
                 {
+                    //if(e.Message.Chat.Id== id_admin_chat)
+                    //{
+                    //    AdminChat(e); return;
+                    //}
                     if (e.Message.Text == "/start")
                     {
 
@@ -140,10 +147,7 @@ namespace KernelHelpBot.Models
          static async void ForMessageText(Update e)
         {
              Console.Out.WriteLineAsync($"{DateTime.Now} {e.Message.From.Id} {e.Message.From.Username} {e.Message.From.FirstName} {e.Message.From.LastName} send: {e.Message.Text}");
-           if(e.Message.Text=="11")
-            {
-            JiraIssues qwe=    Jira.GetRequestOfuser(new User() { email = "y.slobodskiy@kernel.ua" }).Result;
-            }
+           // await Bot.SendTextMessageAsync(id_admin_chat, $" {e.Message.From.Id} {e.Message.From.Username} {e.Message.From.FirstName} {e.Message.From.LastName} send: {e.Message.Text}");
 
 
             switch (e.Message.Text)
@@ -226,8 +230,9 @@ namespace KernelHelpBot.Models
             }
 
         }
-         static async void ForCallbackQuery(Update e)////////////////////////Создает запити на РНД
+         static async void ForCallbackQuery(Update e)//Отправка запроса в жиру по QR
         {
+           
             if (e.CallbackQuery.Data.Contains("Inl_kb_problemId:"))
             {
                 string text_message = e.CallbackQuery.Message.Text;
@@ -258,7 +263,7 @@ namespace KernelHelpBot.Models
                 if (problem == null) return;
                 User u = db.getUserBytelegramId(e.CallbackQuery.From.Id);
                 await Bot.AnswerCallbackQueryAsync(e.CallbackQuery.Id, "Створюємо запит!");
-                IT_HUB this_hub = db.Get_IT_HUB_BY_ORGANIZATION_ID(organizationId).Result;
+               
                 //return;
               //  12345
                 ResponseOnCreateJiraTask result;
@@ -278,12 +283,21 @@ namespace KernelHelpBot.Models
                     string url_create_task = "https://sd.kernel.ua/plugins/servlet/theme/portal/2/" + result.key;
 
                     await Bot.EditMessageTextAsync(e.CallbackQuery.From.Id, e.CallbackQuery.Message.MessageId, "ЗАПИТ СТВОРЕН: <b>" + result.key + "</b>\n" + problem.type_Device_And_Programs.name + " " + problem.text_problem +"\n"+ text_message, parseMode: ParseMode.Html,replyMarkup:new InlineKeyboardMarkup(new InlineKeyboardButton[] {InlineKeyboardButton.WithWebApp(""+result.key,new WebAppInfo() { Url=url_create_task}) }));
-                    DateTime currentTime = DateTime.Now;
 
-                    if (currentTime.TimeOfDay > TimeForCreateTaskInNotWorkingTime)
-                    {
-                        await Bot.SendTextMessageAsync(e.CallbackQuery.From.Id, "Запит створений у неробочий час. Якщо проблема критична і впливає на виробничі процеси - будь-ласка, зателефонуйте відповідальному ІТ фахівцію: " + this_hub.otvetstvenniy+" " +this_hub.phone_number);
-                    }
+                   // await Bot.SendTextMessageAsync(id_admin_chat,$"Пользователь {u.name} {u.surname} {u.email} создал заявку: {problem.text_problem} \n{result.key}");
+                   
+                    DateTime currentTime = DateTime.Now;
+                    bool isWeekday = currentTime.DayOfWeek >= DayOfWeek.Monday && currentTime.DayOfWeek <= DayOfWeek.Friday;
+                    bool isWorkingHours = currentTime.TimeOfDay >= new TimeSpan(8, 0, 0) && currentTime.TimeOfDay < new TimeSpan(18, 0, 0);
+                    if(isWeekday==false || isWorkingHours==false)
+                    {                       
+                        List<Organization> organizations = db.GetListOrganization();
+                        int id = 0;
+                        id = (from t in organizations where t.name == u.work_position select t.id).FirstOrDefault();
+                        IT_HUB hub = db.Get_IT_HUB_BY_ORGANIZATION_ID(id).Result;
+                        await Bot.SendTextMessageAsync(e.CallbackQuery.From.Id, "Запит створений у неробочий час. Якщо проблема критична і впливає на виробничі процеси - будь-ласка, зателефонуйте відповідальному ІТ фахівцію: " + hub.otvetstvenniy + " " + hub.phone_number);
+                        }
+                    
                 }
                 else
                 {
@@ -429,6 +443,17 @@ namespace KernelHelpBot.Models
                             replyMarkup: new InlineKeyboardMarkup(new InlineKeyboardButton[] { InlineKeyboardButton.WithWebApp("" + result.key, new WebAppInfo() { Url = url_create_task }) }),
                             replyToMessageId:e.Message.MessageId
                             );
+                        DateTime currentTime = DateTime.Now;
+                        bool isWeekday = currentTime.DayOfWeek >= DayOfWeek.Monday && currentTime.DayOfWeek <= DayOfWeek.Friday;
+                        bool isWorkingHours = currentTime.TimeOfDay >= new TimeSpan(8, 0, 0) && currentTime.TimeOfDay < new TimeSpan(18, 0, 0);
+                        if (isWeekday == false || isWorkingHours == false)
+                        {
+                            List<Organization> organizations = db.GetListOrganization();
+                            int id = 0;
+                            id = (from t in organizations where t.name == u.work_position select t.id).FirstOrDefault();
+                            IT_HUB hub = db.Get_IT_HUB_BY_ORGANIZATION_ID(id).Result;
+                            await Bot.SendTextMessageAsync(e.Message.From.Id, "Запит створений у неробочий час. Якщо проблема критична і впливає на виробничі процеси - будь-ласка, зателефонуйте відповідальному ІТ фахівцію: " + hub.otvetstvenniy + " " + hub.phone_number);
+                        }
                     }
                     catch (Exception ex) { Console.WriteLine("359: "+ex.Message); }
                   
@@ -496,9 +521,6 @@ namespace KernelHelpBot.Models
 
         }
 
-      
-
-
          static async void MyNoResolvedRequest(Update e)
         {
             await Bot.SendTextMessageAsync(e.Message.From.Id, "Шукаю Ваші запити");
@@ -560,8 +582,6 @@ namespace KernelHelpBot.Models
 
         }
 
-
-
          static async void Dovidnuk(Update e)
         {
 
@@ -583,6 +603,46 @@ namespace KernelHelpBot.Models
 
            
 
+        }
+        static async void AdminChat(Update e)
+        {
+            try
+            {
+                switch (e.Message.Text)
+                {
+                    case "/start":
+                        var replyKeyboard = new ReplyKeyboardMarkup(
+                                           new[]
+                                               {
+                                              new []
+                                           {
+                                               new KeyboardButton ("Всі користувачі"),
+                                            },
+                                                new []
+                                           {
+                                               new KeyboardButton ("..."),
+                                            },
+
+                                               }
+                                           );
+                        replyKeyboard.ResizeKeyboard = true;
+                       // await Bot.SendTextMessageAsync(id_admin_chat, "Що зробити?", replyMarkup: replyKeyboard);
+                        break;
+                    case "Всі користувачі":
+                        List<User> users = db.GetAllUsers().Result;
+                        string msg = "";
+                        int index = 1;
+                        foreach (User user in users) 
+                        {
+                            msg += $"{index}: {user.name} {user.surname} \n ";
+                            index++;
+                        }
+                        msg += "Всього: " + index;
+                      //  await Bot.SendTextMessageAsync(id_admin_chat, msg);
+                        break;
+                }
+            }
+            catch (Exception ex) { Console.WriteLine(ex.Message); }
         }
     }
 }

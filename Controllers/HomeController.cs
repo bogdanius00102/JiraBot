@@ -123,6 +123,12 @@ namespace KernelHelpBot.Controllers
         {
             return PartialView("Partial/Partial_SendMessageAllUsers");
         }
+        public IActionResult PartialEditOtvetstvenniy()
+        {
+
+            ViewBag.IT_HUB = db.Get_IT_HUBs();
+            return PartialView("Partial/PartialEditOtvetstvenniy",db.GetOtvetstvenniys());
+        }
         public IActionResult Partial_DeviceForQR()
         {
             return PartialView("Partial/Partial_DeviceForQR");

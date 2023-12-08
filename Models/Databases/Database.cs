@@ -661,5 +661,33 @@ namespace KernelHelpBot.Models.Databases
             }
             return null;
         }
+        public List<Otvetstvenniy>GetOtvetstvenniys()
+        {
+            try
+            {
+                List<Otvetstvenniy> otvetstvenniys = new List<Otvetstvenniy>();
+                MySqlConnection connection = new MySqlConnection(path);
+                connection.Open();
+                string sql_zapros1 = "SELECT id, fio, phone_number FROM otvetstvennie_in_it_hub;";
+
+                MySqlCommand command = new MySqlCommand(sql_zapros1, connection);
+                MySqlDataReader reader = command.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    otvetstvenniys.Add(new Otvetstvenniy() { id = Convert.ToInt32(reader[0]), fio = reader[1].ToString(), phone_number = reader[2].ToString() });
+
+                }
+                connection.Close();
+
+
+                return otvetstvenniys;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            return null;
+        }
     }
 }

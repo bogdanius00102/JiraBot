@@ -1,0 +1,106 @@
+﻿@using KernelHelpBot.Models.People_Information
+@{
+    List<IT_HUB> it_hubs = ViewBag.IT_HUB;
+    List<Otvetstvenniy> list_otv = Model;
+    var otvetstvenniyList = Newtonsoft.Json.JsonConvert.SerializeObject(list_otv);
+}
+
+
+<div class="EditOtv_main_div">
+
+    <div class="EditOtv_div_left">
+        <label class="EditOtv_label">IT HUB</label>
+        <select id="itHubSelect" onchange="updateOtvetstvenniy()">
+            <option value="-1">Підприємство Хабу</option>
+            @{
+                for (int i = 0; i < it_hubs.Count; i++)
+                {
+                    <option value="@it_hubs[i].id">@it_hubs[i].name</option>
+                }
+            }
+        </select>
+    </div>
+
+    <div class="EditOtv_div_right">
+        <label class="EditOtv_label">Відповідальний</label>
+        <input type="text" id="otvetstvenniyInput" oninput="suggestOtvetstvenniy()" value="" />
+        <div id="suggestions"></div>
+
+    </div>
+    <div class ="EditOtv_div_btn">
+        <button class="EditOtv_btn_update">Оновити</button>
+    </div>
+   
+
+
+</div>
+
+
+
+<script>
+    function updateOtvetstvenniy() {
+        const select = document.getElementById('itHubSelect');
+        const selectedIndex = select.selectedIndex;
+        const selectedOption = select.options[selectedIndex];
+
+        if (selectedOption.value !== "-1") {
+            const selectedIT_HUB = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(it_hubs));
+
+            // Находим выбранный IT_HUB по значению из списка
+            const currentIT_HUB = selectedIT_HUB.find(item => item.id === parseInt(selectedOption.value));
+
+            // Устанавливаем значение ответственного в текстовое поле
+            document.getElementById('otvetstvenniyInput').value = currentIT_HUB.otvetstvenniy;
+        } else {
+            // Если выбрано значение "-1", очищаем текстовое поле
+            document.getElementById('otvetstvenniyInput').value = '';
+        }
+        document.getElementById('suggestions').innerHTML="";
+    }
+
+    function suggestOtvetstvenniy() {
+        const input = document.getElementById('otvetstvenniyInput').value.toLowerCase();
+        const suggestions = document.getElementById('suggestions');
+        suggestions.innerHTML = '';
+        const list_otv = @Html.Raw(otvetstvenniyList);
+        // Фильтрация списка otvetstvenniy по введенному значению
+        const filtered = list_otv.filter(item => item.fio.toLowerCase().includes(input));
+
+        // Вывод предложений
+        //filtered.forEach(item => {
+        //    const suggestion = document.createElement('div');
+        //    suggestion.textContent = item.fio + ' ' + item.phone_number;
+        //    suggestion.onclick = function () {
+        //        // Устанавливаем выбранное значение в поле ввода
+        //        document.getElementById('otvetstvenniyInput').value = item.fio + ' ' + item.phone_number;
+        //        suggestions.innerHTML = '';
+        //    };
+        //    suggestions.appendChild(suggestion);
+        //});
+
+
+        filtered.forEach(item => {
+            const suggestion = document.createElement('div');
+            suggestion.textContent = item.fio + ' ' + item.phone_number;
+            suggestion.classList.add('suggestion-item'); // Добавляем класс для стилизации
+
+            suggestion.onmouseover = function () {
+                // Добавляем подсветку при наведении
+                suggestion.classList.add('highlight');
+            };
+
+            suggestion.onmouseleave = function () {
+                // Убираем подсветку после ухода курсора
+                suggestion.classList.remove('highlight');
+            };
+
+            suggestion.onclick = function () {
+                // Устанавливаем выбранное значение в поле ввода
+                document.getElementById('otvetstvenniyInput').value = item.fio + ' ' + item.phone_number;
+                suggestions.innerHTML = '';
+            };
+
+            suggestions.appendChild(suggestion);
+        });
+    }
+</script>

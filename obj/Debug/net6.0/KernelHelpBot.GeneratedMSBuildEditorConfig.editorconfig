@@ -28,6 +28,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxJbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Visual studio/JiraBot/Views/Home/Partial/PartialEditOtvetstvenniy.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxQYXJ0aWFsXFBhcnRpYWxFZGl0T3R2ZXRzdHZlbm5peS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Visual studio/JiraBot/Views/Home/Partial/Partial_DeviceForQR.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxQYXJ0aWFsXFBhcnRpYWxfRGV2aWNlRm9yUVIuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 

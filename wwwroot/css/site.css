@@ -344,3 +344,75 @@
         min-height: 100px; /* Минимальная высота textarea */
         resize: vertical; /* Разрешаем изменение размера только по вертикали */
     }
+
+.EditOtv_main_div
+{
+    display:flex;
+    justify-content:center;
+   
+}
+.EditOtv_label
+{
+    font-size:calc(14px + 0.7vw);
+    display:block;
+    text-align:center;
+}
+.EditOtv_div_left {
+    margin-left: 5%;
+    margin-right: 5%;
+}
+.EditOtv_div_right {
+    margin-left: 5%;
+    margin-right: 5%;
+}
+#itHubSelect {
+    font-size: calc(14px + 0.7vw);
+    border-radius: 5px;
+    padding-right: 5%;
+    padding-left: 5%;
+    padding-top: 1.5vh;
+    padding-bottom: 1.5vh;
+}
+#otvetstvenniyInput {
+    font-size: calc(14px + 0.7vw);
+    padding-right: 5%;
+    padding-left: 5%;
+    padding-top: 1.5vh;
+    padding-bottom: 1.5vh;
+    border-radius: 5px;
+}
+#suggestions {
+    font-size: calc(14px + 0.7vw);
+}
+.suggestion-item {
+    /* Ваши стили для элементов списка */
+    cursor: pointer;
+    padding: 5px;
+    border: 1px solid #ccc;
+}
+
+.highlight {
+    /* Стили для подсветки при наведении */
+    background-color: #f0f0f0;
+}
+.EditOtv_div_btn {
+    display: flex;
+    align-items: center;
+    margin-left: 5%;
+    margin-right: 5%;
+}
+.EditOtv_btn_update {
+    background-color: blue;
+    color: white;
+    font-size: calc(10px + 1vw);
+    font-weight: 700;
+    border-radius: 30px;
+    padding-right: 5%;
+    padding-left: 5%;
+    padding-top: 1.5vh;
+    padding-bottom: 1.5vh;
+}
+    .EditOtv_btn_update:hover 
+    {
+        color: red;
+    }

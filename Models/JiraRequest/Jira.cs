@@ -17,7 +17,7 @@ namespace KernelHelpBot.Models.JiraRequest
 
             string issueJson = @"{
     ""fields"": {
-        ""project"": { ""key"": ""ITSD"" },
+        ""project"": { ""key"": ""SDTES"" },
         ""summary"":""" + tema + @""",
         ""description"": """ + escapedText + @""",
         ""issuetype"": { ""name"": ""Service Request"" },
