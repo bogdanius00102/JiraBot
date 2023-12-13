@@ -1,5 +1,6 @@
 ﻿
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System.Text;
 using System.Text.Json;
 using Telegram.Bot.Types;
@@ -11,7 +12,7 @@ namespace KernelHelpBot.Models.JiraRequest
       static  string jiraBaseUrl = "https://sd.kernel.ua";
         static string username = "t-bot_sd@kernel.ua";
         static string password = "TB0tforJSD16102024";
-        public static async Task<ResponseOnCreateJiraTask> CreateNewTask(string tema,string text,string avtor,string groops)
+        public static async Task<ResponseOnCreateJiraTask> CreateNewTask(long telegram_id,string tema,string text,string avtor,string groops)
         {
             string escapedText = text.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "\\r");
 
@@ -21,7 +22,7 @@ namespace KernelHelpBot.Models.JiraRequest
         ""summary"":""" + tema + @""",
         ""description"": """ + escapedText + @""",
         ""issuetype"": { ""name"": ""Service Request"" },
-       
+         ""customfield_17000"": """ + telegram_id + @""",
         ""labels"": [""TELEGRAM_BOT"",""KD_ITSD_bot""],
         ""reporter"": { ""name"": """ + avtor + @""" }
     }
@@ -92,7 +93,10 @@ namespace KernelHelpBot.Models.JiraRequest
 
                 // Формирование URL для выполнения запроса к Jira REST API
                 string apiEndpoint = "/rest/api/2/search";
-                string requestUrl = $"{apiEndpoint}?jql={Uri.EscapeDataString(jqlQuery)}";
+                string expandParams = "expand=renderedFields,transitions,editmeta,changelog";
+                //string requestUrl = $"{apiEndpoint}?jql={Uri.EscapeDataString(jqlQuery)}";
+                string requestUrl = $"{apiEndpoint}?jql={Uri.EscapeDataString(jqlQuery)}&{expandParams}";
+
 
                 // Выполнение HTTP GET-запроса к Jira
                 HttpResponseMessage response = await httpClient.GetAsync(requestUrl);
@@ -102,19 +106,7 @@ namespace KernelHelpBot.Models.JiraRequest
                     string jsonContent = await response.Content.ReadAsStringAsync();
                     var issues = System.Text.Json.JsonSerializer.Deserialize<JiraIssues>(jsonContent);
                     return issues;
-                    //foreach (var issue in issues.issues)
-                    //{
-                        //string issueKey = issue.key;
-                        //string summary = issue.fields.summary;
-                        //string description = issue.fields.description;
-
-                        // Для каждой задачи выполните дополнительный запрос, чтобы получить комментарии
-                       // string comments = await GetCommentsForIssue( issueKey);
-
-                       // Console.WriteLine($"Key: {issueKey}, Summary: {summary}, Description: {description}");
-                       // Console.WriteLine("Comments:");
-                        //Console.WriteLine(comments);
-                   // }
+                       
                 }
                 else
                 {
@@ -123,7 +115,7 @@ namespace KernelHelpBot.Models.JiraRequest
                 }
             }
         }
-        private static async Task<string> GetCommentsForIssue( string issueKey)
+        public static async Task<Comments> GetCommentsForIssue( string issueKey)
         {
             using (var httpClient = new HttpClient())
             {
@@ -142,16 +134,16 @@ namespace KernelHelpBot.Models.JiraRequest
                 {
                     // Чтение и десериализация JSON-ответа
                     string jsonContent = await response.Content.ReadAsStringAsync();
-                    var comments = System.Text.Json.JsonSerializer.Deserialize<JiraComments>(jsonContent);
+                   
 
-                    // Соберите комментарии в строку
-                    string commentText = string.Join("\n", comments.comments.Select(comment => comment.body));
-
-                    return commentText;
+                    // Обработка ответа для извлечения комментариев
+                   Comments  myDeserializedClass = JsonConvert.DeserializeObject<Comments>(jsonContent);
+                    return myDeserializedClass;
                 }
                 else
                 {
-                    return "Ошибка при получении комментариев.";
+                    Console.WriteLine("Ошибка при получении комментариев.");
+                    return null;
                 }
             }
         }
@@ -181,18 +173,73 @@ namespace KernelHelpBot.Models.JiraRequest
     {
         public string summary { get; set; } // Название задачи
         public string description { get; set; } // Описание задачи
-                                                // Другие поля задачи, если они присутствуют
+        public JiraStatus status { get; set; } // Статус задачи
+        public JiraAssignee assignee { get; set; } // Исполнитель задачи (если есть)
+                                                                                  // Другие поля задачи, если они присутствуют
+    }
+    public class JiraStatus
+    {
+        public string name { get; set; } // Название статуса
+                                         // Другие свойства статуса, если нужны
     }
 
-    public class JiraComments
+    public class JiraAssignee
     {
-        public List<JiraComment> comments { get; set; }
+        public string name { get; set; }
+        public string displayName { get; set; } // Имя исполнителя
+                                         // Другие свойства исполнителя, если нужны
     }
-
-    public class JiraComment
+    public class Comments
     {
+        public int startAt { get; set; }
+        public int maxResults { get; set; }
+        public int total { get; set; }
+        public List<Comment> comments { get; set; }
+    }
+    public class Comment
+    {
+        public string self { get; set; }
+        public string id { get; set; }
+        public Author author { get; set; }
         public string body { get; set; }
-        // Дополнительные поля комментария, если необходимо
+        public UpdateAuthor updateAuthor { get; set; }
+        public DateTime created { get; set; }
+        public DateTime updated { get; set; }
     }
+    public class UpdateAuthor
+    {
+        public string self { get; set; }
+        public string name { get; set; }
+        public string key { get; set; }
+        public string emailAddress { get; set; }
+        public AvatarUrls avatarUrls { get; set; }
+        public string displayName { get; set; }
+        public bool active { get; set; }
+        public string timeZone { get; set; }
+    }
+    public class Author
+    {
+        public string self { get; set; }
+        public string name { get; set; }
+        public string key { get; set; }
+        public string emailAddress { get; set; }
+        public AvatarUrls avatarUrls { get; set; }
+        public string displayName { get; set; }
+        public bool active { get; set; }
+        public string timeZone { get; set; }
+    }
+    public class AvatarUrls
+    {
+        [JsonProperty("48x48")]
+        public string _48x48 { get; set; }
 
+        [JsonProperty("24x24")]
+        public string _24x24 { get; set; }
+
+        [JsonProperty("16x16")]
+        public string _16x16 { get; set; }
+
+        [JsonProperty("32x32")]
+        public string _32x32 { get; set; }
+    }
 }

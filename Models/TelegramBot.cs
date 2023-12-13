@@ -21,8 +21,8 @@ namespace KernelHelpBot.Models
       //  static long id_admin_chat = -1002006933069;
         static string FirstTextMessage = "Раді Вас бачити. Натисніть \"Поділитися номером телефону\", щоб я побачив хто Ви.";
         static Database db = new Database("server=localhost;user=root;database=kernelhelpbot;password=toor;charset=utf8mb4;");
-       
-      //  static Database db = new Database("server=localhost;user=root;database=kernelhelpbot;password=P@ssw0rd$D;charset=utf8;");
+
+        //  static Database db = new Database("server=localhost;user=root;database=kernelhelpbot;password=P@ssw0rd$D;charset=utf8mb4;");
         public TelegramBot()
         {
             //kernelhelp
@@ -122,8 +122,9 @@ namespace KernelHelpBot.Models
                         else
                         {
                             NetPravNaBota(e);
-                            return;
+                           
                         }
+                        return;
                     }
                     else
                     {
@@ -139,7 +140,7 @@ namespace KernelHelpBot.Models
                 User u = db.getUserBytelegramId(e.CallbackQuery.From.Id);
                 if (u!=null)
                     if(u.actice==true)
-                ForCallbackQuery(e);
+                ForCallbackQuery(e,u);
             }
 
         }
@@ -223,6 +224,7 @@ namespace KernelHelpBot.Models
             if (u.name != null && u.name != "")
             {
                 await Bot.SendTextMessageAsync(u.telegram_data.telegram_id, $"Шановний {u.surname} {u.name}, раді Вас бачити з нами", replyMarkup: replyKeyboard);
+                db.Update_options_for_create_task(u.telegram_data.telegram_id, "");
             }
             else
             {
@@ -230,7 +232,7 @@ namespace KernelHelpBot.Models
             }
 
         }
-         static async void ForCallbackQuery(Update e)//Отправка запроса в жиру по QR
+         static async void ForCallbackQuery(Update e, User u)//Отправка запроса в жиру по QR
         {
            
             if (e.CallbackQuery.Data.Contains("Inl_kb_problemId:"))
@@ -261,19 +263,19 @@ namespace KernelHelpBot.Models
                 
                 Problem_for_type_device_and_programs problem = db.GetProblems_device_and_programsByProblemId(inlKbProblemId);
                 if (problem == null) return;
-                User u = db.getUserBytelegramId(e.CallbackQuery.From.Id);
+              
                 await Bot.AnswerCallbackQueryAsync(e.CallbackQuery.Id, "Створюємо запит!");
                
                 //return;
               //  12345
                 ResponseOnCreateJiraTask result;
                if (u.email!=null && u.email!="")
-                    result = Jira.CreateNewTask(problem.type_Device_And_Programs.name + " " + problem.text_problem, text_message, u.email, "2nd Line Research And Development").Result;
+                    result = Jira.CreateNewTask(e.CallbackQuery.From.Id,problem.type_Device_And_Programs.name + " " + problem.text_problem, text_message, u.email, "2nd Line Research And Development").Result;
                 else
                 {
                     string text = text_message+"\nКористувач: " + u.name + " " + u.surname + " " + u.telegram_data.phone_number + " WorkPosition: " + u.work_position + "\nTelegramId: " + u.telegram_data.telegram_id;
 
-                    result = Jira.CreateNewTask(problem.type_Device_And_Programs.name + " " + problem.text_problem, text, "t-bot_sd@kernel.ua", "2nd Line Research And Development").Result;
+                    result = Jira.CreateNewTask(e.CallbackQuery.From.Id,problem.type_Device_And_Programs.name + " " + problem.text_problem, text, "t-bot_sd@kernel.ua", "2nd Line Research And Development").Result;
 
                 
                 }
@@ -306,7 +308,94 @@ namespace KernelHelpBot.Models
                 }
 
             }
-           
+            else if(e.CallbackQuery.Data== "create_task")
+            {
+                string tema = db.Get_options_for_create_task(e.CallbackQuery.From.Id).Result;
+                if (tema == "") return;
+                string text = e.CallbackQuery.Message.Text.Replace(tema, "");
+                text = text.Replace("Перевірте та підтвердіть заявку", "");
+                
+                bool res = db.Update_options_for_create_task(e.CallbackQuery.From.Id, "").Result;
+                {
+                        ResponseOnCreateJiraTask result;
+                       if (u.email != "" && u.email != null)
+                          result = Jira.CreateNewTask(e.CallbackQuery.From.Id, tema, text, u.email, "2nd Line Research And Development").Result;
+                      else
+                       {
+
+                          text += "\nКористувач: " + u.name + " " + u.surname + " " + u.telegram_data.phone_number + " WorkPosition: "+u.work_position+"\nTelegramId: " + u.telegram_data.telegram_id;
+                           result = Jira.CreateNewTask(e.CallbackQuery.From.Id, tema, text, "t-bot_sd@kernel.ua", "2nd Line Research And Development").Result;
+                       }
+                        if (result != null)
+                      {
+
+                            string url_create_task = "https://sd.kernel.ua/plugins/servlet/theme/portal/2/" + result.key;
+                           Console.WriteLine("Створений  Запит\n" + tema + " : " + text+"\n"+url_create_task);
+                          try
+                           {
+                                await Bot.SendTextMessageAsync(
+                                    chatId: e.CallbackQuery.From.Id, 
+                                   text: "Запит створен: <b>" + result.key + "</b>\n"
+                                + tema + "\n" + text, 
+                                    parseMode: ParseMode.Html,
+                                    replyMarkup: new InlineKeyboardMarkup(new InlineKeyboardButton[] { InlineKeyboardButton.WithWebApp("" + result.key, new WebAppInfo() { Url = url_create_task }) }),
+                                   replyToMessageId:e.CallbackQuery.Message.MessageId
+                                    );
+                                DateTime currentTime = DateTime.Now;
+                                bool isWeekday = currentTime.DayOfWeek >= DayOfWeek.Monday && currentTime.DayOfWeek <= DayOfWeek.Friday;
+                                bool isWorkingHours = currentTime.TimeOfDay >= new TimeSpan(8, 0, 0) && currentTime.TimeOfDay < new TimeSpan(18, 0, 0);
+                                if (isWeekday == false || isWorkingHours == false)
+                                {
+                                    List<Organization> organizations = db.GetListOrganization();
+                                    int id = 0;
+                                    id = (from t in organizations where t.name == u.work_position select t.id).FirstOrDefault();
+                                   IT_HUB hub = db.Get_IT_HUB_BY_ORGANIZATION_ID(id).Result;
+                                   await Bot.SendTextMessageAsync(e.CallbackQuery.From.Id, "Запит створений у неробочий час. Якщо проблема критична і впливає на виробничі процеси - будь-ласка, зателефонуйте відповідальному ІТ фахівцію: " + hub.otvetstvenniy + " " + hub.phone_number);
+                               }
+                           }
+                           catch (Exception ex) { Console.WriteLine("359: "+ex.Message); }
+
+
+
+
+                    }
+
+                }
+                await Bot.DeleteMessageAsync(e.CallbackQuery.From.Id, e.CallbackQuery.Message.MessageId);
+
+            }
+            else if (e.CallbackQuery.Data == "delete_task")
+            {
+               // bool res = db.Update_options_for_create_task(e.CallbackQuery.From.Id, "").Result;
+
+                await Bot.AnswerCallbackQueryAsync(e.CallbackQuery.Id, "Видалено");
+                await Bot.DeleteMessageAsync(e.CallbackQuery.From.Id, e.CallbackQuery.Message.MessageId);
+
+            }
+            if(e.CallbackQuery.Message!=null && e.CallbackQuery.Message.ReplyMarkup!=null && e.CallbackQuery.Message.ReplyMarkup.InlineKeyboard!=null)
+            {
+                string text_btn = e.CallbackQuery.Message.ReplyMarkup.InlineKeyboard.ToList()[0].ToList()[0].Text;
+                if(text_btn== "⚙️ Детально")
+                {
+                    Comments list_comments = Jira.GetCommentsForIssue(e.CallbackQuery.Data).Result;
+                    string text_comments = "";
+                    if(list_comments.comments.Count!=0)
+                    {
+                        text_comments = "📝:\n";
+                        for (int i = 0; i < list_comments.comments.Count; i++)
+                        {
+                            text_comments += $"{list_comments.comments[i].author.displayName}: {list_comments.comments[i].body} ({list_comments.comments[i].created.ToString("yyyy MM dd HH:mm:ss")})\n";
+                        }
+                        await Bot.EditMessageTextAsync(e.CallbackQuery.From.Id,e.CallbackQuery.Message.MessageId,e.CallbackQuery.Message.Text+"\n"+text_comments,  parseMode: ParseMode.Markdown);
+                    }
+                    else
+                    {
+
+                    }
+                }
+
+            }
+
         }
          static Task Error(ITelegramBotClient arg1, Exception arg2, CancellationToken arg3)
         {
@@ -413,61 +502,23 @@ namespace KernelHelpBot.Models
         {
             string tema = db.Get_options_for_create_task(e.Message.From.Id).Result;
             string text = e.Message.Text;
-            if(text!= "🔥 У мене не працює" && text != "❓ Хочу запитати" && text != "💻 Хочу замовити обладнання" && text != "Запит по QR коду" && text != "🗂 Мої запити" && text != "📖 Довідник")
+            InlineKeyboardMarkup replyMarkup = new InlineKeyboardMarkup(new []{
+            new []
             {
-                User u = db.getUserBytelegramId(e.Message.From.Id);
-               
-               bool res= db.Update_options_for_create_task(e.Message.From.Id, "").Result;
-                //      return;
-                ResponseOnCreateJiraTask result;
-                if (u.email != "" && u.email != null)
-                    result = Jira.CreateNewTask(tema, text, u.email, "2nd Line Research And Development").Result;
-                else
-                {
-                 
-                    text += "\nКористувач: " + u.name + " " + u.surname + " " + u.telegram_data.phone_number + " WorkPosition: "+u.work_position+"\nTelegramId: " + u.telegram_data.telegram_id;
-                    result = Jira.CreateNewTask(tema, text, "t-bot_sd@kernel.ua", "2nd Line Research And Development").Result;
-                }
-                if (result != null)
-                {
-                 
-                    string url_create_task = "https://sd.kernel.ua/plugins/servlet/theme/portal/2/" + result.key;
-                    Console.WriteLine("Створений  Запит\n" + tema + " : " + text+"\n"+url_create_task);
-                    try
-                    {
-                        await Bot.SendTextMessageAsync(
-                            chatId: e.Message.From.Id, 
-                            text: "Запит створен: <b>" + result.key + "</b>\n"
-                        + tema + "\n" + text, 
-                            parseMode: ParseMode.Html,
-                            replyMarkup: new InlineKeyboardMarkup(new InlineKeyboardButton[] { InlineKeyboardButton.WithWebApp("" + result.key, new WebAppInfo() { Url = url_create_task }) }),
-                            replyToMessageId:e.Message.MessageId
-                            );
-                        DateTime currentTime = DateTime.Now;
-                        bool isWeekday = currentTime.DayOfWeek >= DayOfWeek.Monday && currentTime.DayOfWeek <= DayOfWeek.Friday;
-                        bool isWorkingHours = currentTime.TimeOfDay >= new TimeSpan(8, 0, 0) && currentTime.TimeOfDay < new TimeSpan(18, 0, 0);
-                        if (isWeekday == false || isWorkingHours == false)
-                        {
-                            List<Organization> organizations = db.GetListOrganization();
-                            int id = 0;
-                            id = (from t in organizations where t.name == u.work_position select t.id).FirstOrDefault();
-                            IT_HUB hub = db.Get_IT_HUB_BY_ORGANIZATION_ID(id).Result;
-                            await Bot.SendTextMessageAsync(e.Message.From.Id, "Запит створений у неробочий час. Якщо проблема критична і впливає на виробничі процеси - будь-ласка, зателефонуйте відповідальному ІТ фахівцію: " + hub.otvetstvenniy + " " + hub.phone_number);
-                        }
-                    }
-                    catch (Exception ex) { Console.WriteLine("359: "+ex.Message); }
-                  
-                }
-                else
-                {
-                    // await Bot.AnswerCallbackQueryAsync(e.CallbackQuery.Id, "Щось пішло не так");
-                    await Console.Out.WriteLineAsync();
-                }
-
-
+                 InlineKeyboardButton.WithCallbackData("❌ Видалити","delete_task"),
+             },
+            new []
+            {
+                 InlineKeyboardButton.WithCallbackData("✅ Підтвердити","create_task"),
             }
-
-
+               } 
+                
+                );
+            await Bot.SendTextMessageAsync(e.Message.From.Id, $"Перевірте та підтвердіть заявку\n{tema}\n{text}", replyMarkup: replyMarkup); 
+               
+              
+            //      return;
+          
         }
 
          static async void SearchQRProblem(Update e)
@@ -534,21 +585,21 @@ namespace KernelHelpBot.Models
                     {
                         string text = "";
                         text += $"[{jiraIssues.issues[i].key}](https://sd.kernel.ua/browse/{jiraIssues.issues[i].key})\n";
+                        text += $"Статус: *{jiraIssues.issues[i].fields.status.name}*\n";
+                        text += $"Виконавець: *{jiraIssues.issues[i].fields.assignee.displayName}*\n";
                         text += $"Тема: *{jiraIssues.issues[i].fields.summary}*\n";
                         text += $"Опис: *{jiraIssues.issues[i].fields.description}*\n";
 
-                        var inlinekeyboard = new InlineKeyboardMarkup(new[]
-                        {
-                              new[]    {    
-                           //  InlineKeyboardButton.WithUrl("Переглянути", "https://sd.kernel.ua/plugins/servlet/theme/portal/2/" + jiraIssues.issues[i].key),
-                              InlineKeyboardButton.WithWebApp("Переглянути",new WebAppInfo() {
-                                  Url="https://sd.kernel.ua/plugins/servlet/theme/portal/2/" + jiraIssues.issues[i].key
-                                                                                                 }
-                                                                )
-                                        } }
-                              );
+                        //var inlinekeyboard = new InlineKeyboardMarkup(new[] {
+                        //      new[]    {    
+                        //      InlineKeyboardButton.WithWebApp("Переглянути",new WebAppInfo() {
+                        //          Url="https://sd.kernel.ua/plugins/servlet/theme/portal/2/" + jiraIssues.issues[i].key
+                        //                  })} });
 
-
+                        var inlinekeyboard = new InlineKeyboardMarkup(new[] {
+                              new[]    {
+                              InlineKeyboardButton.WithCallbackData("⚙️ Детально",jiraIssues.issues[i].key)
+                                         } });
 
 
 
@@ -643,6 +694,10 @@ namespace KernelHelpBot.Models
                 }
             }
             catch (Exception ex) { Console.WriteLine(ex.Message); }
+        }
+        public static async void testwebhook(string str)
+        {
+              await Bot.SendTextMessageAsync(494277044, str);
         }
     }
 }
