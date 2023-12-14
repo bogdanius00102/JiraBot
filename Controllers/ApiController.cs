@@ -7,9 +7,8 @@ using System.Threading.Tasks;
 
 namespace KernelHelpBot.Controllers
 {
-    [ApiController]
-    [Route("[controller]")]
-    public class ApiController: ControllerBase
+    
+    public class ApiController: Controller
     {
         [HttpPost]
         public async Task<IActionResult> NewComment ()
@@ -19,6 +18,7 @@ namespace KernelHelpBot.Controllers
                 using (StreamReader reader = new StreamReader(Request.Body))
                 {
                     string body = await reader.ReadToEndAsync();
+                    Console.WriteLine(body);
                     TelegramBot.NewComment(body);
                     return Ok();
                 }

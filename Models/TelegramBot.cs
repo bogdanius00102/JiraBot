@@ -695,7 +695,7 @@ namespace KernelHelpBot.Models
             }
             catch (Exception ex) { Console.WriteLine(ex.Message); }
         }
-        public static async void testwebhook(string str)
+        public static async void NewComment(string str)
         {
               await Bot.SendTextMessageAsync(494277044, str);
         }
