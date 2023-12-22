@@ -116,6 +116,48 @@ namespace KernelHelpBot.Models.Databases
                 return null;
             }
         }
+        public User getUserBytelegramId(string email)
+        {
+            try
+            {
+                User u = null;
+                MySqlConnection connection = new MySqlConnection(path);
+                connection.Open();
+                string sql_zapros1 = $"SELECT id, telegram_id, name, surname, email, phone_number, work_position, username, fisrtname, " +
+                $"lastname, last_message, access, description, departament,active FROM users WHERE email='{email}'";
+
+                MySqlCommand command = new MySqlCommand(sql_zapros1, connection);
+                MySqlDataReader reader = command.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    u = new User();
+                    u.id = Convert.ToInt32(reader[0]);
+                    u.telegram_data.telegram_id = Convert.ToInt64(reader[1]);
+                    u.name = reader[2].ToString();
+                    u.surname = reader[3].ToString();
+                    u.email = reader[4].ToString();
+                    u.telegram_data.phone_number = reader[5].ToString();
+                    u.work_position = reader[6].ToString();
+                    u.telegram_data.username = reader[7].ToString();
+                    u.telegram_data.fisrtname = reader[8].ToString();
+                    u.telegram_data.lastname = reader[9].ToString();
+                    u.telegram_data.last_message = reader[10].ToString();
+                    u.description = reader[12].ToString();
+                    u.department = reader[13].ToString();
+                    u.actice = Convert.ToBoolean(reader[14]);
+
+                }
+                connection.Close();
+                return u;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Помилка в отриманні даних користувача з Бази даних. \nПомилка: " + ex.Message);
+
+                return null;
+            }
+        }
         public async Task<List<User>> GetAllUsers()
         {
             try

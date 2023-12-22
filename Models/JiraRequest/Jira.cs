@@ -1,6 +1,8 @@
 ﻿
+using MySqlX.XDevAPI;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Net.Mail;
 using System.Text;
 using System.Text.Json;
 using Telegram.Bot.Types;
@@ -12,13 +14,13 @@ namespace KernelHelpBot.Models.JiraRequest
       static  string jiraBaseUrl = "https://sd.kernel.ua";
         static string username = "t-bot_sd@kernel.ua";
         static string password = "TB0tforJSD16102024";
-        public static async Task<ResponseOnCreateJiraTask> CreateNewTask(long telegram_id,string tema,string text,string avtor,string groops)
+        public static async Task<ResponseOnCreateJiraTask> CreateNewTask(long telegram_id,string tema,string text,string avtor)
         {
             string escapedText = text.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "\\r");
 
             string issueJson = @"{
     ""fields"": {
-        ""project"": { ""key"": ""SDTES"" },
+        ""project"": { ""key"": ""ITSD"" },
         ""summary"":""" + tema + @""",
         ""description"": """ + escapedText + @""",
         ""issuetype"": { ""name"": ""Service Request"" },
@@ -84,8 +86,9 @@ namespace KernelHelpBot.Models.JiraRequest
 
 
 
-                string jqlQuery = "project = ITSD AND reporter = '" + u.email+ "' AND status in (Open, \"In Progress\", Reopened, \"Waiting for support\", Pending, Escalated, \"Waiting for approval\", \"Work in progress\", \"Awaiting CAB approval\", Planning, Implementing, Assigned, \"Assigned to group\", \"Ожидание выполнения\", \"In Progress contractor\", \"Transferred to contractor\", \"Awaiting fin CAB\", \"Cmdb owner approval\") AND issuetype != 'Epic (Проект)'";
-
+                //string jqlQuery = "project = ITSD AND reporter = '" + u.email+ "' AND status in (Open, \"In Progress\", Reopened, \"Waiting for support\", Pending, Escalated, \"Waiting for approval\", \"Work in progress\", \"Awaiting CAB approval\", Planning, Implementing, Assigned, \"Assigned to group\", \"Ожидание выполнения\", \"In Progress contractor\", \"Transferred to contractor\", \"Awaiting fin CAB\", \"Cmdb owner approval\") AND issuetype != 'Epic (Проект)'";
+                //string jqlQuery = "project in (ITSD, SDTES) AND reporter = '" + u.email + "' AND status in (Open, \"In Progress\", Reopened, \"Waiting for support\", Pending, Escalated, \"Waiting for approval\", \"Work in progress\", \"Awaiting CAB approval\", Planning, Implementing, Assigned, \"Assigned to group\", \"Ожидание выполнения\", \"In Progress contractor\", \"Transferred to contractor\", \"Awaiting fin CAB\", \"Cmdb owner approval\") AND issuetype != 'Epic (Проект)'";
+                string jqlQuery = $"project = ITSD AND issuetype = \"Service Request\" AND status NOT in (Resolved, Closed, Canceled) AND (reporter = \"{u.email}\" OR TelegramID  ~ \"{u.telegram_data.telegram_id}\")";
 
 
 
@@ -147,8 +150,131 @@ namespace KernelHelpBot.Models.JiraRequest
                 }
             }
         }
+        public static async Task<JiraIssue> GetIssueByKey(string issueKey)
+        {
+            try
+            {
+                using (var httpClient = new HttpClient())
+                {
+                    // Set the base URL for Jira and authentication headers
+                    httpClient.BaseAddress = new Uri(jiraBaseUrl);
+                    httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
+                        "Basic", Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes($"{username}:{password}")));
 
+                    // Build the URL for the Jira REST API to get information about a specific issue
+                    string apiEndpoint = $"/rest/api/2/issue/{issueKey}";
 
+                    // Perform an HTTP GET request to Jira
+                    HttpResponseMessage response = await httpClient.GetAsync(apiEndpoint);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        // Read and deserialize the JSON response
+                        string jsonContent = await response.Content.ReadAsStringAsync();
+                        var issue = System.Text.Json.JsonSerializer.Deserialize<JiraIssue>(jsonContent);
+                        return issue;
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Error: {response.StatusCode}");
+                        return null;
+                    }
+                }
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            return null;
+
+        }
+        public static async Task<JiraIssueDetails> GetIssueDetailsWithComments(string issueKey)
+        {
+            using (var httpClient = new HttpClient())
+            {
+                // Set the base URL for Jira and authentication headers
+                httpClient.BaseAddress = new Uri(jiraBaseUrl);
+                httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
+                    "Basic", Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes($"{username}:{password}")));
+
+                // Build the URL for the Jira REST API to get issue details along with comments
+                string apiEndpoint = $"/rest/api/2/issue/{issueKey}?expand=renderedFields,transitions,editmeta,changelog,comments";
+
+                // Perform an HTTP GET request to Jira
+                HttpResponseMessage response = await httpClient.GetAsync(apiEndpoint);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    // Read and deserialize the JSON response
+                    string jsonContent = await response.Content.ReadAsStringAsync();
+                    var issueDetails = System.Text.Json.JsonSerializer.Deserialize<JiraIssueDetails>(jsonContent);
+                    return issueDetails;
+                }
+                else
+                {
+                    Console.WriteLine($"Error: {response.StatusCode}");
+                    return null;
+                }
+            }
+        }
+        public static async Task<bool> AddCommentToIssue(string issueKey, string comment)
+        {
+            using (var httpClient = new HttpClient())
+            {
+                // Установка базового URL Jira и заголовков для аутентификации
+                httpClient.BaseAddress = new Uri(jiraBaseUrl);
+                httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
+                    "Basic", Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes($"{username}:{password}")));
+
+                // Формирование URL для выполнения запроса к Jira REST API для комментариев
+                string apiEndpoint = $"/rest/api/2/issue/{issueKey}/comment";
+
+                // Создание JSON объекта с данными комментария
+                var content = new StringContent(JsonConvert.SerializeObject(new { body = comment }), Encoding.UTF8, "application/json");
+
+                // Выполнение HTTP POST-запроса к Jira для добавления комментария к задаче
+                HttpResponseMessage response = await httpClient.PostAsync(apiEndpoint, content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine("Комментарий успешно добавлен!");
+                    return true;
+                }
+                else
+                {
+                    Console.WriteLine("Ошибка при добавлении комментария.");
+                }
+            }
+            return false;
+        }
+        public static async Task<byte[]> GetFileInJiraComments(string path)
+        {
+            try
+            {
+                
+                using (var httpClient = new HttpClient())
+                {
+                    // Set the base URL for Jira and authentication headers
+                    httpClient.BaseAddress = new Uri(jiraBaseUrl);
+                    httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
+                        "Basic", Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes($"{username}:{password}")));
+                    HttpResponseMessage response = await httpClient.GetAsync(path);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        byte[] fileBytes = await response.Content.ReadAsByteArrayAsync();
+                        return fileBytes;
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            return null;
+        }
+        
     }
     public class ResponseOnCreateJiraTask
     {
@@ -163,7 +289,11 @@ namespace KernelHelpBot.Models.JiraRequest
     {
         public JiraIssue[] issues { get; set; }
     }
-
+    public class JiraIssueDetails
+    {
+        public JiraIssue Issue { get; set; }
+        public Comments Comments { get; set; }
+    }
     public class JiraIssue
     {
         public string key { get; set; }
@@ -171,12 +301,27 @@ namespace KernelHelpBot.Models.JiraRequest
     }
     public class JiraIssueFields
     {
+        public Comments comment { get; set; }
+        public List<Attachmentt> attachment { get; set; }
         public string summary { get; set; } // Название задачи
         public string description { get; set; } // Описание задачи
         public JiraStatus status { get; set; } // Статус задачи
         public JiraAssignee assignee { get; set; } // Исполнитель задачи (если есть)
                                                                                   // Другие поля задачи, если они присутствуют
     }
+    public class Attachmentt
+    {
+        public string self { get; set; }
+        public string id { get; set; }
+        public string filename { get; set; }
+        public Author author { get; set; }
+        public string created { get; set; }
+        public int size { get; set; }
+        public string mimeType { get; set; }
+        public string content { get; set; }
+        public string thumbnail { get; set; }
+    }
+
     public class JiraStatus
     {
         public string name { get; set; } // Название статуса
@@ -203,8 +348,8 @@ namespace KernelHelpBot.Models.JiraRequest
         public Author author { get; set; }
         public string body { get; set; }
         public UpdateAuthor updateAuthor { get; set; }
-        public DateTime created { get; set; }
-        public DateTime updated { get; set; }
+        public string created { get; set; }
+        public string updated { get; set; }
     }
     public class UpdateAuthor
     {

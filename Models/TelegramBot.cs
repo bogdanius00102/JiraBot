@@ -6,9 +6,12 @@ using KernelHelpBot.Models.People_Information;
 using KernelHelpBot.Models.TechniksInformation;
 using Microsoft.VisualBasic;
 using MySqlX.XDevAPI.Common;
+using System.Runtime.Intrinsics.X86;
+using System.Web;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.InputFiles;
 using Telegram.Bot.Types.ReplyMarkups;
 using static System.Net.Mime.MediaTypeNames;
 using User = KernelHelpBot.Models.People_Information.User;
@@ -34,22 +37,51 @@ namespace KernelHelpBot.Models
         }
        public  async static Task<bool> SendMessageAllUsers(string text)
         {
+            var replyKeyboard = new ReplyKeyboardMarkup(
+                                      new[]
+                                          {
+                                              new []
+                                           {
+
+                                               new KeyboardButton ("🔥 У мене не працює"),
+
+
+                                            },
+                                       new []
+                                           {
+                                            new KeyboardButton ("💻 Хочу замовити обладнання"),
+                                                 new KeyboardButton ("❓ Хочу запитати"),
+                                              //   new KeyboardButton ("Запит по QR коду"),
+
+                                            },
+
+                                        new []
+                                           {
+                                                new KeyboardButton ("🗂 Мої запити"),
+                                                    new KeyboardButton ("📖 Довідник"),
+
+                                            },
+                                          }
+                                      );
+            replyKeyboard.ResizeKeyboard = true;
             try
             {
                 List<User> users = await db.GetAllUsers();
 
                 foreach (var user in users)
-                { if(user.actice==true)
+                { 
+                    if(user.actice==true)
                     try
                     {
-                        await Bot.SendTextMessageAsync(user.telegram_data.telegram_id, text);
+                            db.Update_options_for_create_task(user.telegram_data.telegram_id, "");
+                        await Bot.SendTextMessageAsync(user.telegram_data.telegram_id, text, replyMarkup:replyKeyboard);
                           
-                            Console.WriteLine($"{user.telegram_data.telegram_id} - Sent");
+                            Console.WriteLine($"{user.telegram_data.telegram_id} {user.email} - Sent");
                     }
                     catch (Telegram.Bot.Exceptions.ApiRequestException ex)
                     {
                         // Handle the case where the message couldn't be sent (e.g., user blocked the bot)
-                        Console.WriteLine($"{user.telegram_data.telegram_id} - Not Sent: {ex.Message}");
+                        Console.WriteLine($"{user.telegram_data.telegram_id} {user.email} - Not Sent: {ex.Message}");
                     }
                     else Console.WriteLine($"{user.telegram_data.telegram_id} - Not Sent ACTIVE = FALSE");
                 }
@@ -186,9 +218,15 @@ namespace KernelHelpBot.Models
                 { bool res = db.Update_options_for_create_task(e.Message.From.Id, "").Result; }
                 SearchQRProblem(e);return;
             }
-             if(db.Get_options_for_create_task(e.Message.From.Id).Result!="")
+            string text_options_for_create_task = db.Get_options_for_create_task(e.Message.From.Id).Result;
+             if (text_options_for_create_task.Contains("❓ Хочу запитати") || text_options_for_create_task.Contains("💻 Хочу замовити обладнання") || text_options_for_create_task.Contains("🔥 У мене не працює") )
             {
-                Text_For_Create_New_Request(e);
+                Text_For_Create_New_Request(e);return;
+            }
+             if(text_options_for_create_task.Contains("new_comment"))
+            {
+                string ket_task = text_options_for_create_task.Replace("new_comment","");
+                Text_For_Create_New_Comment(e, ket_task); return;
             }
         }
          static async void SendStartKeyboard(User u)
@@ -270,12 +308,12 @@ namespace KernelHelpBot.Models
               //  12345
                 ResponseOnCreateJiraTask result;
                if (u.email!=null && u.email!="")
-                    result = Jira.CreateNewTask(e.CallbackQuery.From.Id,problem.type_Device_And_Programs.name + " " + problem.text_problem, text_message, u.email, "2nd Line Research And Development").Result;
+                    result = Jira.CreateNewTask(e.CallbackQuery.From.Id,problem.type_Device_And_Programs.name + " " + problem.text_problem, text_message, u.email).Result;
                 else
                 {
                     string text = text_message+"\nКористувач: " + u.name + " " + u.surname + " " + u.telegram_data.phone_number + " WorkPosition: " + u.work_position + "\nTelegramId: " + u.telegram_data.telegram_id;
 
-                    result = Jira.CreateNewTask(e.CallbackQuery.From.Id,problem.type_Device_And_Programs.name + " " + problem.text_problem, text, "t-bot_sd@kernel.ua", "2nd Line Research And Development").Result;
+                    result = Jira.CreateNewTask(e.CallbackQuery.From.Id,problem.type_Device_And_Programs.name + " " + problem.text_problem, text, "t-bot_sd@kernel.ua").Result;
 
                 
                 }
@@ -291,7 +329,7 @@ namespace KernelHelpBot.Models
                     DateTime currentTime = DateTime.Now;
                     bool isWeekday = currentTime.DayOfWeek >= DayOfWeek.Monday && currentTime.DayOfWeek <= DayOfWeek.Friday;
                     bool isWorkingHours = currentTime.TimeOfDay >= new TimeSpan(8, 0, 0) && currentTime.TimeOfDay < new TimeSpan(18, 0, 0);
-                    if(isWeekday==false || isWorkingHours==false)
+                    if(isWeekday==false || isWorkingHours==false || currentTime.Day==25 || currentTime.Day == 1)
                     {                       
                         List<Organization> organizations = db.GetListOrganization();
                         int id = 0;
@@ -319,12 +357,12 @@ namespace KernelHelpBot.Models
                 {
                         ResponseOnCreateJiraTask result;
                        if (u.email != "" && u.email != null)
-                          result = Jira.CreateNewTask(e.CallbackQuery.From.Id, tema, text, u.email, "2nd Line Research And Development").Result;
+                          result = Jira.CreateNewTask(e.CallbackQuery.From.Id, tema, text, u.email).Result;
                       else
                        {
 
                           text += "\nКористувач: " + u.name + " " + u.surname + " " + u.telegram_data.phone_number + " WorkPosition: "+u.work_position+"\nTelegramId: " + u.telegram_data.telegram_id;
-                           result = Jira.CreateNewTask(e.CallbackQuery.From.Id, tema, text, "t-bot_sd@kernel.ua", "2nd Line Research And Development").Result;
+                           result = Jira.CreateNewTask(e.CallbackQuery.From.Id, tema, text, "t-bot_sd@kernel.ua").Result;
                        }
                         if (result != null)
                       {
@@ -372,29 +410,125 @@ namespace KernelHelpBot.Models
                 await Bot.DeleteMessageAsync(e.CallbackQuery.From.Id, e.CallbackQuery.Message.MessageId);
 
             }
-            if(e.CallbackQuery.Message!=null && e.CallbackQuery.Message.ReplyMarkup!=null && e.CallbackQuery.Message.ReplyMarkup.InlineKeyboard!=null)
+            else if(e.CallbackQuery.Data.Contains("create_comment"))
             {
-                string text_btn = e.CallbackQuery.Message.ReplyMarkup.InlineKeyboard.ToList()[0].ToList()[0].Text;
-                if(text_btn== "⚙️ Детально")
+                try
                 {
-                    Comments list_comments = Jira.GetCommentsForIssue(e.CallbackQuery.Data).Result;
+                    string key_task = e.CallbackQuery.Data.Replace("create_comment","");
+                    string text_comment = e.CallbackQuery.Message.Text.Replace("Ваш коментар, відправити?\n", "");
+                    bool res = db.Update_options_for_create_task(e.CallbackQuery.From.Id, "").Result;
+                    string text = $"{u.name} {u.surname} {u.email}: "+ text_comment;
+                    Jira.AddCommentToIssue(key_task, text);
+                    await Bot.EditMessageTextAsync(e.CallbackQuery.From.Id, e.CallbackQuery.Message.MessageId, $"Ваш коментар: *{text_comment}* додано до заявки.", parseMode: ParseMode.Markdown);
+
+
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+                }
+            else if (e.CallbackQuery.Data == "delete_comment")
+            {
+
+                await Bot.AnswerCallbackQueryAsync(e.CallbackQuery.Id, "Видалено");
+                await Bot.DeleteMessageAsync(e.CallbackQuery.From.Id, e.CallbackQuery.Message.MessageId);
+            }
+            else if(e.CallbackQuery.Data.Contains("detalno"))
+            {  
+                     await Bot.AnswerCallbackQueryAsync(e.CallbackQuery.Id, "Завантаження...");
+
+                  
+
+
+
+                    JiraIssue jiraIssue = Jira.GetIssueByKey(e.CallbackQuery.Data.Replace("detalno","")).Result;
+
+                string encodedDescription = HttpUtility.HtmlEncode(jiraIssue.fields.description);
+                string text = "";
+
+                text += $"<a href='https://sd.kernel.ua/plugins/servlet/theme/portal/2/{jiraIssue.key}'>{jiraIssue.key}</a>\n";
+                text += $"<b>Статус:</b> {jiraIssue.fields.status.name}\n";
+                if(jiraIssue.fields.assignee!=null)
+                text += $"<b>Виконавець:</b> {jiraIssue.fields.assignee.displayName}\n";
+                else text += $"<b>Виконавець:</b> Не призначено \n";
+                text += $"<b>Тема:</b> {jiraIssue.fields.summary}\n";
+                text += $"<b>Опис:</b> {encodedDescription}\n";
+
+               
                     string text_comments = "";
-                    if(list_comments.comments.Count!=0)
+                var inlinekeyboard = new InlineKeyboardMarkup(new[] {
+                              new[]    {
+
+                                                InlineKeyboardButton.WithCallbackData("✍️ Додати коментар","vidpovistu"+e.CallbackQuery.Data.Replace("detalno", "")),
+
+                                         },
+                             });
+
+                if (jiraIssue.fields.comment.comments.Count != 0)
                     {
+                 
                         text_comments = "📝:\n";
-                        for (int i = 0; i < list_comments.comments.Count; i++)
+                        for (int i = 0; i < jiraIssue.fields.comment.comments.Count; i++)
                         {
-                            text_comments += $"{list_comments.comments[i].author.displayName}: {list_comments.comments[i].body} ({list_comments.comments[i].created.ToString("yyyy MM dd HH:mm:ss")})\n";
+                            text_comments += $"{jiraIssue.fields.comment.comments[i].author.displayName}: {jiraIssue.fields.comment.comments[i].body} ({ Convert.ToDateTime (jiraIssue.fields.comment.comments[i].created ). ToString("yyyy MM dd HH:mm:ss")})\n";
+                                
                         }
-                        await Bot.EditMessageTextAsync(e.CallbackQuery.From.Id,e.CallbackQuery.Message.MessageId,e.CallbackQuery.Message.Text+"\n"+text_comments,  parseMode: ParseMode.Markdown);
-                    }
+
+                        if (text_comments.Length > 4090)
+                        {
+                            text_comments = text_comments.Substring(0, 1090) + "...";
+                        }
+                        text_comments = text+"\n" + text_comments;
+                    
+
+                        try
+                        {
+                            await Bot.EditMessageTextAsync(e.CallbackQuery.From.Id, e.CallbackQuery.Message.MessageId, text_comments, replyMarkup: inlinekeyboard, parseMode: ParseMode.Html);
+
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine(ex.Message);
+                        }
+                      }
                     else
                     {
+                        try
+                        {
+                            await Bot.EditMessageTextAsync(e.CallbackQuery.From.Id, e.CallbackQuery.Message.MessageId, text, replyMarkup: inlinekeyboard, parseMode: ParseMode.Html);
+
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine(ex.Message);
+                        }
+                     
+                    }
+               
+            
+            
+            
+            }
+            else if (e.CallbackQuery.Data.Contains("vidpovistu"))
+                {
+                    try
+                    {
+                        if (db.Update_options_for_create_task(e.CallbackQuery.From.Id, "new_comment"+e.CallbackQuery.Data.Replace("vidpovistu","")).Result == true)
+                        {
+                            await Bot.AnswerCallbackQueryAsync(e.CallbackQuery.Id, "Напишіть коментар, я його відправлю");
+                            await Bot.SendTextMessageAsync(e.CallbackQuery.From.Id, text: "Напишіть коментар, я його відправлю", replyToMessageId: e.CallbackQuery.Message.MessageId);
+
+                        }
+                    }
+                    catch(Exception ex)
+                    {
 
                     }
-                }
 
-            }
+                 }
+
+            
 
         }
          static Task Error(ITelegramBotClient arg1, Exception arg2, CancellationToken arg3)
@@ -503,14 +637,15 @@ namespace KernelHelpBot.Models
             string tema = db.Get_options_for_create_task(e.Message.From.Id).Result;
             string text = e.Message.Text;
             InlineKeyboardMarkup replyMarkup = new InlineKeyboardMarkup(new []{
+           
             new []
             {
-                 InlineKeyboardButton.WithCallbackData("❌ Видалити","delete_task"),
+                 InlineKeyboardButton.WithCallbackData("✅ Відправити","create_task"),
+            },
+             new []
+            {
+                 InlineKeyboardButton.WithCallbackData("❌ Скасувати","delete_task"),
              },
-            new []
-            {
-                 InlineKeyboardButton.WithCallbackData("✅ Підтвердити","create_task"),
-            }
                } 
                 
                 );
@@ -520,8 +655,31 @@ namespace KernelHelpBot.Models
             //      return;
           
         }
+        static async void Text_For_Create_New_Comment(Update e, string key_task)
+        {
+           
+            string text = e.Message.Text;
+            InlineKeyboardMarkup replyMarkup = new InlineKeyboardMarkup(new[]{
+                 new []
+            {
+                 InlineKeyboardButton.WithCallbackData("✅ Відправити","create_comment"),
+            },
+             new []
+            {
+                 InlineKeyboardButton.WithCallbackData("❌ Скасувати","delete_comment"),
+             },
+           
+               }
 
-         static async void SearchQRProblem(Update e)
+                );
+            await Bot.SendTextMessageAsync(e.Message.From.Id, $"Ваш коментар, відправити?\n{text}", replyMarkup: replyMarkup);
+
+
+            //      return;
+
+        }
+
+        static async void SearchQRProblem(Update e)
         {
             if (e.Message.Text.Contains("/start QRProblemDevice_and_Programs_id_"))
             {
@@ -584,9 +742,12 @@ namespace KernelHelpBot.Models
                     for (int i = 0; i < jiraIssues.issues.Count(); i++)
                     {
                         string text = "";
-                        text += $"[{jiraIssues.issues[i].key}](https://sd.kernel.ua/browse/{jiraIssues.issues[i].key})\n";
+                        //text += $"[{jiraIssues.issues[i].key}](https://sd.kernel.ua/browse/{jiraIssues.issues[i].key})\n";
+                        text += $"[{jiraIssues.issues[i].key}](https://sd.kernel.ua/plugins/servlet/theme/portal/2/{jiraIssues.issues[i].key})\n";
                         text += $"Статус: *{jiraIssues.issues[i].fields.status.name}*\n";
+                        if(jiraIssues.issues[i].fields.assignee!=null)
                         text += $"Виконавець: *{jiraIssues.issues[i].fields.assignee.displayName}*\n";
+                        else text += $"Виконавець: *Не призначено*\n";
                         text += $"Тема: *{jiraIssues.issues[i].fields.summary}*\n";
                         text += $"Опис: *{jiraIssues.issues[i].fields.description}*\n";
 
@@ -598,7 +759,12 @@ namespace KernelHelpBot.Models
 
                         var inlinekeyboard = new InlineKeyboardMarkup(new[] {
                               new[]    {
-                              InlineKeyboardButton.WithCallbackData("⚙️ Детально",jiraIssues.issues[i].key)
+
+                                                InlineKeyboardButton.WithCallbackData("✍️ Додати коментар","vidpovistu" + jiraIssues.issues[i].key),
+
+                                         },
+                              new[]    {
+                                InlineKeyboardButton.WithCallbackData("ℹ️ Переглянути детально","detalno"+jiraIssues.issues[i].key)
                                          } });
 
 
@@ -695,9 +861,205 @@ namespace KernelHelpBot.Models
             }
             catch (Exception ex) { Console.WriteLine(ex.Message); }
         }
-        public static async void NewComment(string str)
+        public static async void NewStatus(JiraGetWebhookJson json)
         {
-              await Bot.SendTextMessageAsync(494277044, str);
+            if(json!=null )
+            {
+                if(json.fields!=null)
+                {
+                    if(json.fields.customfield_17000!=null && json.fields.customfield_17000!="")
+                    {
+                        try
+                        {
+                            string str = $"У Заявці [{json.key}](https://sd.kernel.ua/plugins/servlet/theme/portal/2/{json.key}) \n" +
+                                $"{json.fields.summary} \n " +
+                                 $"Опис: {json.fields.description} \n " +
+                                $"Змінено статус задачі на  *{json.fields.status.description}*";
+
+                            var inlinekeyboard = new InlineKeyboardMarkup(new[] {
+                              new[]    {
+
+                                                InlineKeyboardButton.WithCallbackData("✍️ Додати коментар","vidpovistu" + json.key),
+
+                                         },
+                             new[]    {
+
+                              InlineKeyboardButton.WithCallbackData("ℹ️ Переглянути детально","detalno"+json.key)
+                                         }});
+                            bool res = db.Update_options_for_create_task(Convert.ToInt64 (json.fields.customfield_17000), "").Result;
+                            await Bot.SendTextMessageAsync(json.fields.customfield_17000, str, replyMarkup: inlinekeyboard, parseMode: ParseMode.Markdown);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine(ex);
+                        }
+                        return;
+                    }
+                   
+                    
+                    
+                }
+            }
+            Console.WriteLine($"Произошло событие NEW_STATUS, но telegram_id в заявке {json.key} не обнаружен");
+
+            // text += $"[{jiraIssues.issues[i].key}](https://sd.kernel.ua/browse/{jiraIssues.issues[i].key})\n";
+      
+           
+        }       
+        public static async void NewComment(JiraGetWebhookJson json)
+        {
+
+            if (json != null)
+            {
+                if (json.fields != null)
+                {
+                    if (json.fields.customfield_17000 != null && json.fields.customfield_17000 != "")
+                    {
+
+                        try
+                        {
+                            Comments comments = Jira.GetCommentsForIssue(json.key).Result;
+                            if (comments.comments != null && comments.comments.Count > 0)
+                            {
+                                string str = $"У Заявці [{json.key}](https://sd.kernel.ua/plugins/servlet/theme/portal/2/{json.key}) \n{json.fields.summary} \n " +
+                                    $"Опис: {json.fields.description} \n " +
+                                    $"Новий коментар від " +
+                                    $"*{comments.comments[comments.comments.Count - 1].author.displayName}*:\n  {comments.comments[comments.comments.Count - 1].body}";
+                                var inlinekeyboard = new InlineKeyboardMarkup(new[] {
+                              new[]    {
+                              InlineKeyboardButton.WithCallbackData("✍️ Відповісти","vidpovistu" + json.key)
+                                         },
+                                   new[]    {
+                              InlineKeyboardButton.WithCallbackData("ℹ️ Переглянути детально","detalno"+json.key)
+                                         },
+
+                                });
+
+
+                                if (str.Length > 4090)
+                                {
+                                    str = str.Substring(0, 1090) + "...";
+                                }
+
+                                bool res = db.Update_options_for_create_task(Convert.ToInt64(json.fields.customfield_17000), "").Result;
+
+                                await Bot.SendTextMessageAsync(json.fields.customfield_17000, str, replyMarkup: inlinekeyboard, parseMode: ParseMode.Markdown);
+
+
+
+
+
+
+
+
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine(ex);
+                        }
+
+
+
+                        //try
+                        //{
+                        //    JiraIssue issue = Jira.GetIssueByKey(json.key).Result;
+                        //    string body_text = issue.fields.comment.comments[issue.fields.comment.comments.Count - 1].body;
+                        //    byte[] bytesfile = null;
+                        //    string filename = "";
+                        //    foreach (Attachmentt item in issue.fields.attachment)
+                        //    {
+                        //        if(body_text.Contains(item.filename))
+                        //        {
+                        //            byte[] _bytesfile = Jira.GetFileInJiraComments(item.content).Result;
+                        //            filename = item.filename;
+                        //            bytesfile = _bytesfile;
+                        //            break;
+                        //        }
+                        //    }
+                        //    if (filename != "")
+                        //    {
+                        //        using (MemoryStream ms = new MemoryStream(bytesfile))
+                        //        {
+                        //            InputOnlineFile inputFile = new InputOnlineFile(ms, filename);
+                        //            await Bot.SendDocumentAsync(json.fields.customfield_17000, inputFile);
+                        //        }
+                        //    }
+                            
+                        //}
+                        //catch (Exception ex)
+                        //{
+                        //    Console.WriteLine(ex);
+                        //}
+
+                        return;
+                    }
+                }
+            }
+            Console.WriteLine($"Произошло событие NEW_COMMENT, но telegram_id в заявке {json.key} не обнаружен");
+
+
+
+
+
+      
+
+        }
+        public static async void CloseTask(JiraGetWebhookJson json)
+        {
+
+            if (json != null)
+            {
+                if (json.fields != null)
+                {
+                    if (json.fields.customfield_17000 != null && json.fields.customfield_17000 != "")
+                    {
+
+                        try
+                        {
+                            Comments comments = Jira.GetCommentsForIssue(json.key).Result;
+                            if (comments.comments != null && comments.comments.Count > 0)
+                            {
+                                string str = $"Заявка [{json.key}](https://sd.kernel.ua/plugins/servlet/theme/portal/2/{json.key}) *виконана* \n{json.fields.summary} \n\n Коментар від " +
+                                    $"*{comments.comments[comments.comments.Count - 1].author.displayName}*\n📝:\n  {comments.comments[comments.comments.Count - 1].body}";
+                                var inlinekeyboard = new InlineKeyboardMarkup(new[] {
+                              new[]    {
+                              InlineKeyboardButton.WithCallbackData("✍️ Відповісти","vidpovistu" + json.key)
+                                         },
+                                   new[]    {
+                              InlineKeyboardButton.WithCallbackData("ℹ️ Переглянути детально","detalno"+json.key)
+                                         },
+
+                                });
+
+
+                                if (str.Length > 4090)
+                                {
+                                    str = str.Substring(0, 1090) + "...";
+                                }
+
+                                bool res = db.Update_options_for_create_task(Convert.ToInt64(json.fields.customfield_17000), "").Result;
+
+                                await Bot.SendTextMessageAsync(json.fields.customfield_17000, str, replyMarkup: inlinekeyboard, parseMode: ParseMode.Markdown);
+
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine(ex);
+                        }
+                        return;
+                    }
+                }
+            }
+            Console.WriteLine($"Произошло событие CloseTask, но telegram_id в заявке {json.key} не обнаружен");
+
+
+
+
+
+
+
         }
     }
 }
