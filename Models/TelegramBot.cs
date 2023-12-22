@@ -23,7 +23,7 @@ namespace KernelHelpBot.Models
         static TelegramBotClient Bot;
       //  static long id_admin_chat = -1002006933069;
         static string FirstTextMessage = "Раді Вас бачити. Натисніть \"Поділитися номером телефону\", щоб я побачив хто Ви.";
-        //static Database db = new Database("server=localhost;user=root;database=kernelhelpbot;password=toor;charset=utf8mb4;");
+       // static Database db = new Database("server=localhost;user=root;database=kernelhelpbot;password=toor;charset=utf8mb4;");
 
           static Database db = new Database("server=localhost;user=root;database=kernelhelpbot;password=P@ssw0rd$D;charset=utf8mb4;");
         public TelegramBot()
@@ -662,7 +662,7 @@ namespace KernelHelpBot.Models
             InlineKeyboardMarkup replyMarkup = new InlineKeyboardMarkup(new[]{
                  new []
             {
-                 InlineKeyboardButton.WithCallbackData("✅ Відправити","create_comment"),
+                 InlineKeyboardButton.WithCallbackData("✅ Відправити","create_comment"+key_task),
             },
              new []
             {
