@@ -247,7 +247,7 @@ namespace KernelHelpBot.Models.JiraRequest
         public object customfield_10107 { get; set; }
         public object customfield_10108 { get; set; }
         public object customfield_10109 { get; set; }
-        public DateTime lastViewed { get; set; }
+        public string lastViewed { get; set; }
         public object customfield_16200 { get; set; }
         public object customfield_14300 { get; set; }
         public object customfield_14301 { get; set; }
