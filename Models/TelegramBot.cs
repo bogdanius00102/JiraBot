@@ -6,6 +6,7 @@ using KernelHelpBot.Models.People_Information;
 using KernelHelpBot.Models.TechniksInformation;
 using Microsoft.VisualBasic;
 using MySqlX.XDevAPI.Common;
+using System.Linq;
 using System.Runtime.Intrinsics.X86;
 using System.Web;
 using Telegram.Bot;
@@ -21,21 +22,23 @@ namespace KernelHelpBot.Models
     {
 
         static TelegramBotClient Bot;
-      //  static long id_admin_chat = -1002006933069;
-        static string FirstTextMessage = "Раді Вас бачити. Натисніть \"Поділитися номером телефону\", щоб я побачив хто Ви.";
-       // static Database db = new Database("server=localhost;user=root;database=kernelhelpbot;password=toor;charset=utf8mb4;");
+        //  static long id_admin_chat = -1002006933069;
+        private static Dictionary<long, Dictionary<string, List<string>>> userPhotoAlbums = new Dictionary<long, Dictionary<string, List<string>>>();
 
-          static Database db = new Database("server=localhost;user=root;database=kernelhelpbot;password=P@ssw0rd$D;charset=utf8mb4;");
+        static string FirstTextMessage = "Раді Вас бачити. Натисніть \"Поділитися номером телефону\", щоб я побачив хто Ви.";
+        static Database db = new Database("server=localhost;user=root;database=kernelhelpbot;password=toor;charset=utf8mb4;");
+
+         // static Database db = new Database("server=localhost;user=root;database=kernelhelpbot;password=P@ssw0rd$D;charset=utf8mb4;");
         public TelegramBot()
         {
             //kernelhelp
             //itsd
 
-            //Bot = new TelegramBotClient("6382587286:AAGwGAaNmKMy-oD-wzqtihpFe_3oI2TZlf0");
-            Bot = new TelegramBotClient("6939260864:AAH-IALzUbpfoAdQQwxPFVQpmyZWCF2s6Wk");
+            Bot = new TelegramBotClient("6382587286:AAGwGAaNmKMy-oD-wzqtihpFe_3oI2TZlf0");
+            //Bot = new TelegramBotClient("6939260864:AAH-IALzUbpfoAdQQwxPFVQpmyZWCF2s6Wk");
             Bot.StartReceiving(Update, Error);
         }
-       public  async static Task<bool> SendMessageAllUsers(string text)
+         public  async static Task<bool> SendMessageAllUsers(string text)
         {
             var replyKeyboard = new ReplyKeyboardMarkup(
                                       new[]
@@ -95,8 +98,7 @@ namespace KernelHelpBot.Models
             }
 
         }
-
-        async static Task Update(ITelegramBotClient bot, Update e, CancellationToken arg3)
+         async static Task Update(ITelegramBotClient bot, Update e, CancellationToken arg3)
         {
             // return;
             if (e.Message != null)
@@ -134,7 +136,7 @@ namespace KernelHelpBot.Models
                     }
 
                 }
-                if (e.Message.Text != null)
+              else  if (e.Message.Text != null)
                 {
                     //if(e.Message.Chat.Id== id_admin_chat)
                     //{
@@ -165,6 +167,33 @@ namespace KernelHelpBot.Models
                     }
                   
                 }
+               
+                else if (e.Message.Photo != null)
+                {
+                    if (e.Message.MediaGroupId == null)
+                    {
+
+                        //  Jira.AddPhotoCommentToIssue("SDTES-61792", fileContents, "ph.png");
+                        var fileId = e.Message.Photo[3].FileId;
+
+                        // Получаем сам файл изображения
+                        var file = await Bot.GetFileAsync(fileId);
+
+                        // Получаем Stream изображения
+                        using (MemoryStream imageStream = new MemoryStream())
+                        {
+                            await Bot.DownloadFileAsync(file.FilePath, imageStream);
+                            byte[] imageBytes = imageStream.ToArray();
+
+                            // Вызываем метод для добавления комментария в Jira с изображением
+                            Jira.AddPhotoCommentToIssue("SDTES-61792", imageBytes, file.FilePath);
+                        }
+
+                    }
+
+                }
+
+
 
             }
             else if (e.CallbackQuery != null )
@@ -176,7 +205,6 @@ namespace KernelHelpBot.Models
             }
 
         }
-
          static async void ForMessageText(Update e)
         {
              Console.Out.WriteLineAsync($"{DateTime.Now} {e.Message.From.Id} {e.Message.From.Username} {e.Message.From.FirstName} {e.Message.From.LastName} send: {e.Message.Text}");
@@ -185,6 +213,12 @@ namespace KernelHelpBot.Models
 
             switch (e.Message.Text)
             {
+                case "0666924236":
+                    User u = new User();
+                    u.telegram_data.phone_number = "0666924236";
+                    User a = RequestTo1cApi.SearchUser(u).Result;
+                    Console.WriteLine(a.name);
+                    break;
               
                 case "❓ Хочу запитати":
                     CreateNewRequest(e);return;
@@ -615,9 +649,7 @@ namespace KernelHelpBot.Models
          static async void NetPravNaBota(Update e)
         {
             await Bot.SendTextMessageAsync(e.Message.From.Id, "Наразі у вас немає прав на використання цього бота."); ForStart(e);
-        }
-      
-
+        }     
          static async void CreateNewRequest(Update e)
         {
             string SendText = "Створення нового запиту '<b>"+e.Message.Text+ "</b>'.\n";
@@ -630,7 +662,6 @@ namespace KernelHelpBot.Models
             if (db.Update_options_for_create_task(e.Message.From.Id, e.Message.Text).Result==true)
             await Bot.SendTextMessageAsync(e.Message.From.Id, SendText,  parseMode: ParseMode.Html);
         }
-
 
          static async void Text_For_Create_New_Request(Update e)
         {
@@ -655,7 +686,7 @@ namespace KernelHelpBot.Models
             //      return;
           
         }
-        static async void Text_For_Create_New_Comment(Update e, string key_task)
+         static async void Text_For_Create_New_Comment(Update e, string key_task)
         {
            
             string text = e.Message.Text;
@@ -679,7 +710,7 @@ namespace KernelHelpBot.Models
 
         }
 
-        static async void SearchQRProblem(Update e)
+         static async void SearchQRProblem(Update e)
         {
             if (e.Message.Text.Contains("/start QRProblemDevice_and_Programs_id_"))
             {

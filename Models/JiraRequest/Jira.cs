@@ -1,7 +1,12 @@
 ﻿
+using Microsoft.AspNetCore.Connections;
 using MySqlX.XDevAPI;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Configuration;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Net.Mail;
 using System.Text;
 using System.Text.Json;
@@ -20,7 +25,7 @@ namespace KernelHelpBot.Models.JiraRequest
 
             string issueJson = @"{
     ""fields"": {
-        ""project"": { ""key"": ""ITSD"" },
+        ""project"": { ""key"": ""SDTES"" },
         ""summary"":""" + tema + @""",
         ""description"": """ + escapedText + @""",
         ""issuetype"": { ""name"": ""Service Request"" },
@@ -274,8 +279,121 @@ namespace KernelHelpBot.Models.JiraRequest
             }
             return null;
         }
-        
+        public static async Task<ResponseOnCreateJiraTask> CreateNewTaskWithOneImage(long telegram_id, string tema, string text, string avtor, Stream imageStream,string filename)
+        {
+            using (var client = new HttpClient())
+            {
+                // Устанавливаем базовый URL для REST API Jira.
+                client.BaseAddress = new Uri(jiraBaseUrl);
+
+                // Создаем заголовок для Basic Authentication.
+                string authInfo = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{username}:{password}"));
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", authInfo);
+
+                // Создаем объект MultipartFormDataContent для передачи файла
+                using (var formData = new MultipartFormDataContent())
+                {
+                    // Добавляем остальные параметры в JSON
+                    var jsonContent = new StringContent(GetJsonWithImage(tema, avtor), Encoding.UTF8, "application/json");
+                    formData.Add(jsonContent, "data");
+
+                    // Добавляем файл изображения
+                    //var imageContent = new StreamContent(imageStream);
+                    //formData.Add(imageContent, "file", "image.jpg");
+                    using (MemoryStream memoryStream = new MemoryStream())
+                    {
+                        await imageStream.CopyToAsync(memoryStream);
+                        byte[] imageBytes = memoryStream.ToArray();
+
+                        var imageContent = new ByteArrayContent(imageBytes);
+                        imageContent.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg"); // Используйте соответствующий тип контента для вашего изображения
+                        formData.Add(imageContent, "file", filename);
+                    }
+
+
+
+
+                    // Создаем запрос POST для создания задачи с изображением
+                    var response = await client.PostAsync("/rest/api/2/issue", formData);
+
+
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string responseContent = await response.Content.ReadAsStringAsync();
+                        ResponseOnCreateJiraTask result = JsonConvert.DeserializeObject<ResponseOnCreateJiraTask>(responseContent);
+                        Console.WriteLine("Заявка создана");
+                        return result;
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Ошибка: {response.StatusCode}");
+                        string responseContent = await response.Content.ReadAsStringAsync();
+                        Console.WriteLine(responseContent);
+                    }
+                }
+            }
+
+            return null;
+        }
+        public static async void AddPhotoCommentToIssue(string issueKey, byte[]bytes_file, string fileName)
+        {
+            try
+            {
+                string url = $"{jiraBaseUrl}/rest/api/2/issue/{issueKey}/attachments";
+                var client = new HttpClient();
+                string authInfo = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{username}:{password}"));
+
+                var header = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", authInfo);
+
+                client.DefaultRequestHeaders.Accept.Clear();
+                client.DefaultRequestHeaders.Authorization = header;
+                client.DefaultRequestHeaders.Add("X-Atlassian-Token", "no-check");
+
+                MultipartFormDataContent multiPartContent = new MultipartFormDataContent("-data-");
+
+                ByteArrayContent byteArrayContent = new ByteArrayContent(bytes_file);
+
+                multiPartContent.Add(byteArrayContent, "file", fileName);
+
+                var response = await client.PostAsync(url, multiPartContent);
+
+                var result = await response.Content.ReadAsStringAsync();
+
+                if (response.StatusCode != System.Net.HttpStatusCode.OK)
+                    throw new Exception(result);
+            }
+            catch (Exception e)
+            {
+                // Обработка ошибки
+            }
+        }
+
+
+        private static string GetJsonWithImage(string tema, string avtor)
+        {
+            // Формируем JSON для создания задачи в Jira без изображения
+            StringBuilder jsonBuilder = new StringBuilder();
+
+            jsonBuilder.AppendLine("{");
+            jsonBuilder.AppendLine("  \"fields\": {");
+            jsonBuilder.AppendLine($"    \"project\": {{ \"key\": \"SDTES\" }},");
+            jsonBuilder.AppendLine($"    \"summary\": \"{tema}\",");
+            jsonBuilder.AppendLine($"    \"issuetype\": {{ \"name\": \"Service Request\" }},");
+            jsonBuilder.AppendLine($"    \"labels\": [\"TELEGRAM_BOT\",\"KD_ITSD_bot\"],");
+            jsonBuilder.AppendLine($"    \"reporter\": {{ \"name\": \"{avtor}\" }}");
+            jsonBuilder.AppendLine("  }");
+            jsonBuilder.AppendLine("}");
+
+            return jsonBuilder.ToString();
+        }
+
+        private static string GetFileUrl(string fileId)
+        {
+            return $"{jiraBaseUrl}/rest/api/2/issue/{fileId}/attachments/{fileId}";
+        }
     }
+   
     public class ResponseOnCreateJiraTask
     {
          public string id { get;set; }
