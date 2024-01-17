@@ -336,7 +336,7 @@ namespace KernelHelpBot.Models.JiraRequest
 
             return null;
         }
-        public static async void AddPhotoCommentToIssue(string issueKey, byte[]bytes_file, string fileName)
+        public static async Task<bool> AddPhotoCommentToIssue(string issueKey, byte[]bytes_file, string fileName)
         {
             try
             {
@@ -359,7 +359,10 @@ namespace KernelHelpBot.Models.JiraRequest
                 var response = await client.PostAsync(url, multiPartContent);
 
                 var result = await response.Content.ReadAsStringAsync();
-
+                if (response.IsSuccessStatusCode)
+                {
+                    return true;
+                }
                 if (response.StatusCode != System.Net.HttpStatusCode.OK)
                     throw new Exception(result);
             }
@@ -367,9 +370,9 @@ namespace KernelHelpBot.Models.JiraRequest
             {
                 // Обработка ошибки
             }
+            return false;
         }
-
-
+      
         private static string GetJsonWithImage(string tema, string avtor)
         {
             // Формируем JSON для создания задачи в Jira без изображения

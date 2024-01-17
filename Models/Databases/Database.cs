@@ -20,38 +20,87 @@ namespace KernelHelpBot.Models.Databases
         {
             try
             {
-                MySqlConnection connection = new MySqlConnection(path);
-                connection.Open();
-                string request = $"SELECT COUNT(*) FROM kernelhelpbot.users WHERE telegram_id = '{user.telegram_data.telegram_id}'";
-                MySqlCommand command = new MySqlCommand(request, connection);
-                int result_request_check_user = Convert.ToInt32(command.ExecuteScalar());
-                if (result_request_check_user == 0)
+                using (MySqlConnection connection = new MySqlConnection(path))
                 {
-                    request = $"INSERT INTO `kernelhelpbot`.`users` (`telegram_id`, `name`, `surname`, `email`, `phone_number`, `work_position`, `username`, `fisrtname`, `lastname`, `last_message`, `description`, `departament`) VALUES ('{user.telegram_data.telegram_id}', '{user.name}', '{user.surname}', '{user.email}', '{user.telegram_data.phone_number}', '{user.work_position}', '{user.telegram_data.username}', '{user.telegram_data.fisrtname}', '{user.telegram_data.lastname}', '{user.telegram_data.last_message}', '{user.description}', '{user.department}');\r\n";
-                    command = new MySqlCommand(request, connection);
-                    command.ExecuteScalar();
+                    connection.Open();
 
-                    connection.Close();
-                    return true;
+                    // Проверка существования пользователя
+                    string checkUserQuery = "SELECT COUNT(*) FROM kernelhelpbot.users WHERE telegram_id = @telegram_id";
+                    using (MySqlCommand checkUserCommand = new MySqlCommand(checkUserQuery, connection))
+                    {
+                        checkUserCommand.Parameters.AddWithValue("@telegram_id", user.telegram_data.telegram_id);
+                        int resultRequestCheckUser = Convert.ToInt32(checkUserCommand.ExecuteScalar());
+
+                        if (resultRequestCheckUser == 0)
+                        {
+                            // Вставка нового пользователя
+                            string insertUserQuery = "INSERT INTO `kernelhelpbot`.`users` " +
+                                                     "(`telegram_id`, `name`, `surname`, `email`, `phone_number`, " +
+                                                     "`work_position`, `username`, `fisrtname`, `lastname`, " +
+                                                     "`last_message`, `description`, `departament`) " +
+                                                     "VALUES " +
+                                                     "(@telegram_id, @name, @surname, @email, @phone_number, " +
+                                                     "@work_position, @username, @firstname, @lastname, " +
+                                                     "@last_message, @description, @department)";
+
+                            using (MySqlCommand insertUserCommand = new MySqlCommand(insertUserQuery, connection))
+                            {
+                                SetUserParameters(insertUserCommand, user);
+                                insertUserCommand.ExecuteNonQuery();
+                            }
+
+                            return true;
+                        }
+                        else
+                        {
+                            // Обновление существующего пользователя
+                            string updateUserQuery = "UPDATE `kernelhelpbot`.`users` SET " +
+                                                    "`name` = @name, " +
+                                                    "`surname` = @surname, " +
+                                                    "`email` = @email, " +
+                                                    "`phone_number` = @phone_number, " +
+                                                    "`work_position` = @work_position, " +
+                                                    "`username` = @username, " +
+                                                    "`last_message` = @last_message, " +
+                                                    "`description` = @description, " +
+                                                    "`departament` = @department " +
+                                                    "WHERE (`id` = @telegram_id);";
+
+                            using (MySqlCommand updateUserCommand = new MySqlCommand(updateUserQuery, connection))
+                            {
+                                SetUserParameters(updateUserCommand, user);
+                                updateUserCommand.ExecuteNonQuery();
+                            }
+
+                            Console.WriteLine("Користувач вже є у базі даних");
+                            return true;
+                        }
+                    }
                 }
-                else
-                {
-
-                    request = $"UPDATE `kernelhelpbot`.`users` SET `name` = '{user.name}', `surname` = '{user.surname}', `email` = '{user.email}', `phone_number` = '{user.telegram_data.phone_number}', `work_position` = '{user.work_position}', `username` = '{user.telegram_data.username}', `fisrtname` = '{user.telegram_data.fisrtname}', `lastname` = '{user.telegram_data.lastname}', `last_message` = '{user.telegram_data.last_message}', `description` = '{user.description}', `departament` = '{user.department}' WHERE(`id` = '{user.telegram_data.telegram_id}');";
-                    command = new MySqlCommand(request, connection);
-                    command.ExecuteScalar();
-                    connection.Close();
-                    Console.WriteLine("Користувач вже є у базі даних");
-                    return true;
-                }
-
             }
-                catch (Exception ex)
+            catch (Exception ex)
             {
-                Console.WriteLine("Виникла помилка. Помилка у DatabaseUserInfo, у методі AddNewUser. Помилка:\n" + ex.Message);
+                Console.WriteLine("Виникла помилка. Помилка у DatabaseUserInfo, у методі AddOrUpdateUser. Помилка:\n" + ex.Message);
                 return false;
             }
         }
+
+        private void SetUserParameters(MySqlCommand command, User user)
+        {
+            command.Parameters.AddWithValue("@telegram_id", user.telegram_data.telegram_id);
+            command.Parameters.AddWithValue("@name", user.name);
+            command.Parameters.AddWithValue("@surname", user.surname);
+            command.Parameters.AddWithValue("@email", user.email);
+            command.Parameters.AddWithValue("@phone_number", user.telegram_data.phone_number);
+            command.Parameters.AddWithValue("@work_position", user.work_position);
+            command.Parameters.AddWithValue("@username", user.telegram_data.username);
+            command.Parameters.AddWithValue("@firstname", string.Empty);
+            command.Parameters.AddWithValue("@lastname", string.Empty);
+            command.Parameters.AddWithValue("@last_message", user.telegram_data.last_message);
+            command.Parameters.AddWithValue("@description", user.description);
+            command.Parameters.AddWithValue("@department", user.department);
+        }
+
         public bool Delete_dev_and_programs(int id)
         {
             try

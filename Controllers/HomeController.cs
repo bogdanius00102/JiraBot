@@ -8,21 +8,128 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Org.BouncyCastle.Asn1.Ocsp;
 using System.Collections.Generic;
 using System.Diagnostics;
-
+using Timer = System.Timers.Timer;
 namespace KernelHelpBot.Controllers
 {
    
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
-        //static Database db = new Database("server=localhost;user=root;database=kernelhelpbot;password=toor;charset=utf8mb4;");
-        static Database db = new Database("server=localhost;user=root;database=kernelhelpbot;password=P@ssw0rd$D;charset=utf8mb4;");
+        
+        static string PathDB = "server=localhost;user=root;database=kernelhelpbot;password=toor;charset=utf8mb4;";              //test
+        string BotApi = "6382587286:AAGwGAaNmKMy-oD-wzqtihpFe_3oI2TZlf0";                                                       //test
 
-        public HomeController(ILogger<HomeController> logger)
+
+
+        // static string PathDB = "server=localhost;user=root;database=kernelhelpbot;password=P@ssw0rd$D;charset=utf8mb4;";     //prod
+        //string BotApi = "6939260864:AAH-IALzUbpfoAdQQwxPFVQpmyZWCF2s6Wk";                                                     //prod
+
+
+
+        static Database db = new Database(PathDB);
+        private static bool isInitialized = false;
+        private readonly object updateLock = new object();
+        private static readonly object lockObj = new object();
+        private bool isUpdating = false;
+        public TelegramBot Bot;
+        Timer timer;
+
+        public HomeController()
         {
-            _logger = logger;
+            InitializeData();
         }
+        private void InitializeData()
+        {
+            if (!isInitialized)
+            {
+                lock (lockObj)
+                {
+                    if (!isInitialized)
+                    {
+                        Bot = new TelegramBot(PathDB,BotApi);
 
+                        isInitialized = true;
+                        timer = new Timer(15 * 60 * 1000);
+                        timer.Elapsed += (sender, e) => UpdateBotStatus();
+                        timer.Start();
+                    }
+                }
+            }
+        }
+        public async void UpdateBotStatus()
+        {
+            lock (updateLock)
+            {
+                if (isUpdating)
+                {
+                    // Если метод уже выполняется, просто выходим
+                    return;
+                }
+
+                try
+                {
+                    isUpdating = true;
+                     ExecuteUpdateAsync().Wait();
+                   
+
+                }
+                finally
+                {
+                    isUpdating = false;
+                }
+            }
+        }
+        private async Task ExecuteUpdateAsync()
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                // Устанавливаем таймаут запроса
+                client.Timeout = TimeSpan.FromSeconds(10);
+
+                try
+                {
+                    // URL для GET-запроса
+                    string url = "https://api.telegram.org/bot"+ BotApi + "/getUpdates";
+
+                    // Выполняем GET-запрос
+                    HttpResponseMessage response = await client.GetAsync(url);
+
+                    // Проверяем успешность ответа
+                    if (response.IsSuccessStatusCode)
+                    {
+                        // Читаем содержимое ответа в виде строки
+                        string result = await response.Content.ReadAsStringAsync();
+                        if(result== "{\"ok\":true,\"result\":[]}")
+                        {
+                            await Console.Out.WriteLineAsync(   "Ok");
+                        }
+                        else
+                        {
+                            await Console.Out.WriteLineAsync(   $"\n\nStatus bot: {result}\n\nRestartBot\n");
+                            Bot.StopReceiving();
+                            Bot = new TelegramBot(PathDB, BotApi);
+                        }
+                        // Обработка результата
+                        //Console.WriteLine(result);
+                    }
+                    else
+                    {
+                        // Обработка ошибочного ответа
+                        Console.WriteLine($"Ошибка: {response.StatusCode} - {response.ReasonPhrase}");
+                    }
+                }
+                catch (HttpRequestException ex)
+                {
+                    // Обработка ошибок HTTP-запроса
+                    Console.WriteLine($"Ошибка HTTP-запроса: {ex.Message}");
+                }
+                catch (TaskCanceledException)
+                {
+                    // Обработка исключения при превышении таймаута
+                    Console.WriteLine("Таймаут запроса превышен.");
+                }
+            }
+        }
         public IActionResult Index()
         {
             return View();

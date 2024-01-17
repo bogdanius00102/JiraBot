@@ -1,12 +1,16 @@
+using KernelHelpBot.Controllers;
 using KernelHelpBot.Models;
 using KernelHelpBot.Models.JiraRequest;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.HttpOverrides;
+using System.Threading;
 
 namespace KernelHelpBot
 {
     public class Program
     {
+       // private static Timer botTimer;
+       // static TelegramBot telegramBot;
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
@@ -39,9 +43,11 @@ namespace KernelHelpBot
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}");
-            new TelegramBot();
-          
+            new HomeController();
+           
+
             app.Run();
         }
+   
     }
 }
