@@ -12,7 +12,8 @@
         //   public string personal_phone_number { get; set; }
         public string description { get; set; }
         public TelegramData telegram_data = new TelegramData();
-        public bool actice { get; set; }
+        public bool active { get; set; }
+        public string project { get; set; }
 
     }
 }

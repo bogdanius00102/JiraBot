@@ -19,13 +19,13 @@ namespace KernelHelpBot.Models.JiraRequest
       static  string jiraBaseUrl = "https://sd.kernel.ua";
         static string username = "t-bot_sd@kernel.ua";
         static string password = "TB0tforJSD16102024";
-        public static async Task<ResponseOnCreateJiraTask> CreateNewTask(long telegram_id,string tema,string text,string avtor)
+        public static async Task<ResponseOnCreateJiraTask> CreateNewTask(long telegram_id,string tema,string text,string avtor,string project)
         {
             string escapedText = text.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "\\r");
 
             string issueJson = @"{
     ""fields"": {
-        ""project"": { ""key"": ""SDTES"" },
+        ""project"": { ""key"": """+ project + @""" },
         ""summary"":""" + tema + @""",
         ""description"": """ + escapedText + @""",
         ""issuetype"": { ""name"": ""Service Request"" },

@@ -9,6 +9,8 @@ using Microsoft.VisualBasic;
 using MySqlX.XDevAPI.Common;
 using System.ComponentModel;
 using System.Linq;
+using System.Net.Mail;
+using System.Net;
 using System.Runtime.Intrinsics.X86;
 using System.Text.RegularExpressions;
 using System.Web;
@@ -28,7 +30,7 @@ namespace KernelHelpBot.Models
         
         static string FirstTextMessage = "Раді Вас бачити. Натисніть \"Поділитися номером телефону\", щоб я побачив хто Ви.";
         static Database db;
-        public static string TextDovidnuk = "Цей Бот створений для можливості швидко створити заявку, переглянути їх статус, або додати коментар.\r\nЗаявку можна створити, натиснувши на головні кнопки :\r\n\"🔥 У мене не працює\"  \r\n \"💻 Хочу замовити обладнання\"\r\n\"❓ Хочу запитати\"\r\nДалі необхідно детально описати що саме сталось, та при необхідності додати фото. (Якщо прикладаєте фото, то текст звернення необхідно вказати в одному повідомлені з зображенням).\r\n\r\nДля перегляду коментарів або статусу вашої заявки необхідно на головному меню натиснути кнопку \"🗂 Мої запити\"\r\nБот знайде ваші запити, надішле стислу інформацію з кнопками \"✍️ Додати коментар\" та \"ℹ️ Переглянути детально\"\r\n\r\nПри зміні статусу або при новому коментарі у  вашій заявці - бот вас попередить.\r\nВи маєте можливість відповідати на надіслані коментарі у вашій заявці, натиснувши кнопку \"✍️ Відповісти\".\r\n\nПри виникненні питань, звертайтесь до підтримки іншими способами. Портал, пошта (sd@kernel.ua), телефон +380991003000  0800408848";
+        public static string TextDovidnuk = "Призначення боту – забезпечити співробітникам Компанії швидкий і зручний доступ до служби ІТ підтримки – створити запит, переглянути його статус, додати коментар чи графічне зображення.\r\n \r\nЗапити створюються за допомогою кнопок на головному екрані:\r\nКнопка \"🔥 У мене не працює\" – коли щось не працює: ноутбук, принтер, сканер, програмне забезпечення 1С, КНО, Navision, Outlook, тощо.\r\nКнопка \"💻 Хочу замовити обладнання\" – коли потрібно замовити ІТ обладнання: мишку, клавіатуру, додатковий монітор, килимок, гарнітуру, тощо.\r\nКнопка \"❓ Хочу запитати\" – якщо потрібна консультація з приводу роботи ІТ сервісів Компанії.\r\n \r\nПри створенні запиту необхідно чітко і лаконічно описати проблему, за необхідності додати фото (якщо додається фото – текст запиту потрібно писати в одному повідомлені з фото).\r\n \r\nКнопка \"🗂 Мої запити\" - відображає створені Вами запити і їх статус: в роботі, очікує виконання.\r\nКнопка \"ℹ️ Переглянути детально\" – відобразить детальну інформацію обраного запиту.\r\nКнопка \"✍️ Додати коментар\" – дозволяє додати коментар до запиту.\r\n \r\nПри зміні статусу або при новому коментарі від фахівців ІТ підтримки – бот Вас проінформує. Натиснувши кнопку \"✍️ Відповісти\" – ви зможете відповісти на такий коментар.\r\n \r\nЯкщо бот не функціонує належним чином - просимо сповістити службу ІТ підтримки одним із інших способів:\r\nпортал https://sd.kernel.ua/plugins/servlet/theme/portal/2\r\nелектронна пошта sd@kernel.ua\r\nтелефон +380 99 100 3 000, 080 040 8 848.";
         public  TelegramBot(string PathDB, string BotApi)
         {
             db = new Database(PathDB);
@@ -79,7 +81,7 @@ namespace KernelHelpBot.Models
 
                 foreach (var user in users)
                 { 
-                    if(user.actice==true)
+                    if(user.active==true)
                     try
                     {
                             db.Update_options_for_create_task(user.telegram_data.telegram_id, "");
@@ -157,11 +159,51 @@ namespace KernelHelpBot.Models
                     else if (u!=null)
                     {
                        
-                        if (u.actice==true)
+                        if (u.active==true)
                         ForMessageText(e);
                         else
                         {
-                            NetPravNaBota(e);
+                            if(e.Message.Text.Contains("@kernel.ua") || e.Message.Text.Contains("@kernel.local") || e.Message.Text.Contains("@yztk.ua")  )
+                            {
+                                String SendMailFrom = "b.doroshkov@gmail.com";
+                                String SendMailTo = e.Message.Text;
+                                String SendMailSubject = "Подтверждение доступа в телеграм бот Kernel Digital. IT Service Desk Bot";
+                                String SendMailBody = "Код 12345";
+
+                                try
+                                {
+                                    SmtpClient SmtpServer = new SmtpClient("smtp.gmail.com", 587);
+                                    SmtpServer.DeliveryMethod = SmtpDeliveryMethod.Network;
+                                    MailMessage email = new MailMessage();
+                                    // START
+                                    email.From = new MailAddress(SendMailFrom);
+                                    email.To.Add(SendMailTo);
+                                    email.CC.Add(SendMailFrom);
+                                    email.Subject = SendMailSubject;
+                                    email.Body = SendMailBody;
+                                    //END
+                                    SmtpServer.Timeout = 5000;
+                                    SmtpServer.EnableSsl = true;
+                                    SmtpServer.UseDefaultCredentials = false;
+                                    SmtpServer.Credentials = new NetworkCredential(SendMailFrom, "yrynihltjsdkwgsu");
+                                    SmtpServer.Send(email);
+
+                                    Console.WriteLine("Email Successfully Sent");
+                                    await Bot.SendTextMessageAsync(e.Message.From.Id, "Отправил вам на почту код.");
+
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine(ex.ToString());
+                                    Console.ReadKey();
+                                }
+                               
+                                return;
+                            }
+                            else
+                                
+                                
+                                NetPravNaBota(e);
                            
                         }
                         return;
@@ -189,7 +231,7 @@ namespace KernelHelpBot.Models
             {
                 User u = db.getUserBytelegramId(e.CallbackQuery.From.Id);
                 if (u!=null)
-                    if(u.actice==true)
+                    if(u.active==true)
                 ForCallbackQuery(e,u);
             }
 
@@ -398,22 +440,23 @@ namespace KernelHelpBot.Models
                 }
                 
                
-                
+                Organization or=db.GetOrganization(organizationId);
+                IT_HUB hub = db.Get_IT_HUB_BY_ORGANIZATION_ID(or.id).Result;
                 Problem_for_type_device_and_programs problem = db.GetProblems_device_and_programsByProblemId(inlKbProblemId);
                 if (problem == null) return;
-              
+                text_message = $"{hub.name}\nПідприємство: {or.name}\n" + text_message;
                 await Bot.AnswerCallbackQueryAsync(e.CallbackQuery.Id, "Створюємо запит!");
                
                 //return;
               //  12345
                 ResponseOnCreateJiraTask result;
                if (u.email!=null && u.email!="")
-                    result = Jira.CreateNewTask(e.CallbackQuery.From.Id,problem.type_Device_And_Programs.name + " " + problem.text_problem, text_message, u.email).Result;
+                    result = Jira.CreateNewTask(e.CallbackQuery.From.Id,problem.type_Device_And_Programs.name + " " + problem.text_problem, text_message, u.email, u.project).Result;
                 else
                 {
                     string text = text_message+"\nКористувач: " + u.name + " " + u.surname + " " + u.telegram_data.phone_number + " WorkPosition: " + u.work_position + "\nTelegramId: " + u.telegram_data.telegram_id;
 
-                    result = Jira.CreateNewTask(e.CallbackQuery.From.Id,problem.type_Device_And_Programs.name + " " + problem.text_problem, text, "t-bot_sd@kernel.ua").Result;
+                    result = Jira.CreateNewTask(e.CallbackQuery.From.Id,problem.type_Device_And_Programs.name + " " + problem.text_problem, text, "t-bot_sd@kernel.ua", u.project).Result;
 
                 
                 }
@@ -434,7 +477,7 @@ namespace KernelHelpBot.Models
                         List<Organization> organizations = db.GetListOrganization();
                         int id = 0;
                         id = (from t in organizations where t.name == u.work_position select t.id).FirstOrDefault();
-                        IT_HUB hub = db.Get_IT_HUB_BY_ORGANIZATION_ID(id).Result;
+                      //  IT_HUB hub = db.Get_IT_HUB_BY_ORGANIZATION_ID(id).Result;
                         await Bot.SendTextMessageAsync(e.CallbackQuery.From.Id, "Запит створений у неробочий час. Якщо проблема критична і впливає на виробничі процеси - будь-ласка, зателефонуйте відповідальному ІТ фахівцію: " + hub.otvetstvenniy + " " + hub.phone_number);
                         }
                     
@@ -457,12 +500,12 @@ namespace KernelHelpBot.Models
                 {
                         ResponseOnCreateJiraTask result;
                        if (u.email != "" && u.email != null)
-                          result = Jira.CreateNewTask(e.CallbackQuery.From.Id, tema, text, u.email).Result;
+                          result = Jira.CreateNewTask(e.CallbackQuery.From.Id, tema, text, u.email, u.project).Result;
                       else
                        {
 
                           text += "\nКористувач: " + u.name + " " + u.surname + " " + u.telegram_data.phone_number + " WorkPosition: "+u.work_position+"\nTelegramId: " + u.telegram_data.telegram_id;
-                           result = Jira.CreateNewTask(e.CallbackQuery.From.Id, tema, text, "t-bot_sd@kernel.ua").Result;
+                           result = Jira.CreateNewTask(e.CallbackQuery.From.Id, tema, text, "t-bot_sd@kernel.ua", u.project).Result;
                        }
                         if (result != null)
                       {
@@ -539,12 +582,12 @@ namespace KernelHelpBot.Models
                 {
                     ResponseOnCreateJiraTask result;
                     if (u.email != "" && u.email != null)
-                        result = Jira.CreateNewTask(e.CallbackQuery.From.Id, tema, text, u.email).Result;
+                        result = Jira.CreateNewTask(e.CallbackQuery.From.Id, tema, text, u.email, u.project).Result;
                     else
                     {
 
                         text += "\nКористувач: " + u.name + " " + u.surname + " " + u.telegram_data.phone_number + " WorkPosition: " + u.work_position + "\nTelegramId: " + u.telegram_data.telegram_id;
-                        result = Jira.CreateNewTask(e.CallbackQuery.From.Id, tema, text, "t-bot_sd@kernel.ua").Result;
+                        result = Jira.CreateNewTask(e.CallbackQuery.From.Id, tema, text, "t-bot_sd@kernel.ua", u.project).Result;
                     }
                     if (result != null && result.key != null)
                     {
@@ -661,6 +704,7 @@ namespace KernelHelpBot.Models
                     await Bot.AnswerCallbackQueryAsync(e.CallbackQuery.Id, "Завантаження");
                     string key_task = e.CallbackQuery.Data.Replace("create_Photo_comment", "");
                     string text_comment = e.CallbackQuery.Message.Caption.Replace("Ваш коментар, відправити?\n", "");
+                    text_comment=text_comment.Replace("Ваш коментар, відправити?", "");
                     bool res = db.Update_options_for_create_task(e.CallbackQuery.From.Id, "").Result;
                   
                     string text = $"{u.name} {u.surname} {u.email}: " + text_comment;
@@ -945,7 +989,7 @@ namespace KernelHelpBot.Models
             User u = db.getUserBytelegramId(e.Message.From.Id);
 
 
-            if (u == null || u.actice==false)
+            if (u == null || u.active==false)
             {
                
                 ReplyKeyboardMarkup replyKeyboard = new ReplyKeyboardMarkup((new[]
@@ -1004,7 +1048,23 @@ namespace KernelHelpBot.Models
                 //  u = ActiveDirectory.UpdateUserByPhoneNumber(u);
 
                 u = RequestTo1cApi.SearchUser(u).Result;
-                if (u.name == null || u.name == "") { NetPravNaBota(e);return; }
+                if (u.name == null || u.name == "")
+                {
+                    /*NetPravNaBota(e)*/
+                     u.active = false;
+                   bool addNew_not_1C_user =db.AddOrUpdateUser(u);
+                    if(addNew_not_1C_user)
+                    {
+                        await Bot.SendTextMessageAsync(e.Message.From.Id, "Наразі у вас немає прав на використання цього бота. Для роз'яснень зверніться до Вашого IT фахівця будь-яким іншим доступним способом. Але є можливість ідентифікації через вашу пошту. Будь ласка відправте мені ваш email.");
+
+                    }
+                    return; 
+                }
+                else
+                {
+                    u.active = true;
+                    u.project = "ITSD";
+                }
                 bool addNewUser = db.AddOrUpdateUser(u);
                 if (addNewUser)
                 {

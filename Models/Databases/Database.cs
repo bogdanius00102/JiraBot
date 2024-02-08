@@ -37,11 +37,11 @@ namespace KernelHelpBot.Models.Databases
                             string insertUserQuery = "INSERT INTO `kernelhelpbot`.`users` " +
                                                      "(`telegram_id`, `name`, `surname`, `email`, `phone_number`, " +
                                                      "`work_position`, `username`, `fisrtname`, `lastname`, " +
-                                                     "`last_message`, `description`, `departament`) " +
+                                                     "`last_message`, `description`, `departament`, `active`, `project`) " +
                                                      "VALUES " +
                                                      "(@telegram_id, @name, @surname, @email, @phone_number, " +
                                                      "@work_position, @username, @firstname, @lastname, " +
-                                                     "@last_message, @description, @department)";
+                                                     "@last_message, @description, @department, @active, @project)";
 
                             using (MySqlCommand insertUserCommand = new MySqlCommand(insertUserQuery, connection))
                             {
@@ -64,6 +64,8 @@ namespace KernelHelpBot.Models.Databases
                                                     "`last_message` = @last_message, " +
                                                     "`description` = @description, " +
                                                     "`departament` = @department " +
+                                                      "`active` = @active, " +
+                                                    "`project` = @project " +
                                                     "WHERE (`id` = @telegram_id);";
 
                             using (MySqlCommand updateUserCommand = new MySqlCommand(updateUserQuery, connection))
@@ -99,6 +101,8 @@ namespace KernelHelpBot.Models.Databases
             command.Parameters.AddWithValue("@last_message", user.telegram_data.last_message);
             command.Parameters.AddWithValue("@description", user.description);
             command.Parameters.AddWithValue("@department", user.department);
+            command.Parameters.AddWithValue("@active", user.active);
+            command.Parameters.AddWithValue("@project", user.project);
         }
 
         public bool Delete_dev_and_programs(int id)
@@ -131,7 +135,7 @@ namespace KernelHelpBot.Models.Databases
                 MySqlConnection connection = new MySqlConnection(path);
                 connection.Open();
                 string sql_zapros1 = $"SELECT id, telegram_id, name, surname, email, phone_number, work_position, username, fisrtname, " +
-                $"lastname, last_message, access, description, departament,active FROM users WHERE telegram_id='{telegramId}'";
+                $"lastname, last_message, access, description, departament,active,project FROM users WHERE telegram_id='{telegramId}'";
 
                 MySqlCommand command = new MySqlCommand(sql_zapros1, connection);
                 MySqlDataReader reader = command.ExecuteReader();
@@ -152,8 +156,8 @@ namespace KernelHelpBot.Models.Databases
                     u.telegram_data.last_message = reader[10].ToString();
                     u.description = reader[12].ToString();
                     u.department = reader[13].ToString();
-                    u.actice = Convert.ToBoolean(reader[14]);
-
+                    u.active = Convert.ToBoolean(reader[14]);
+                    u.project = reader[15].ToString();
                 }
                 connection.Close();
                 return u;
@@ -173,7 +177,7 @@ namespace KernelHelpBot.Models.Databases
                 MySqlConnection connection = new MySqlConnection(path);
                 connection.Open();
                 string sql_zapros1 = $"SELECT id, telegram_id, name, surname, email, phone_number, work_position, username, fisrtname, " +
-                $"lastname, last_message, access, description, departament,active FROM users WHERE email='{email}'";
+                $"lastname, last_message, access, description, departament,active,project FROM users WHERE email='{email}'";
 
                 MySqlCommand command = new MySqlCommand(sql_zapros1, connection);
                 MySqlDataReader reader = command.ExecuteReader();
@@ -194,8 +198,8 @@ namespace KernelHelpBot.Models.Databases
                     u.telegram_data.last_message = reader[10].ToString();
                     u.description = reader[12].ToString();
                     u.department = reader[13].ToString();
-                    u.actice = Convert.ToBoolean(reader[14]);
-
+                    u.active = Convert.ToBoolean(reader[14]);
+                    u.project = reader[15].ToString();
                 }
                 connection.Close();
                 return u;
@@ -235,7 +239,7 @@ namespace KernelHelpBot.Models.Databases
                         u.telegram_data.last_message = reader[10].ToString();
                         u.description = reader[12].ToString();
                         u.department = reader[13].ToString();
-                        u.actice = Convert.ToBoolean(reader[14]);
+                        u.active = Convert.ToBoolean(reader[14]);
                         users.Add(u);
                     }
                     connection.Close();
