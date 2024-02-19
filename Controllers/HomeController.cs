@@ -15,14 +15,14 @@ namespace KernelHelpBot.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
-        
-        static string PathDB = "server=localhost;user=root;database=kernelhelpbot;password=toor;charset=utf8mb4;";              //test
-        string BotApi = "6382587286:AAGwGAaNmKMy-oD-wzqtihpFe_3oI2TZlf0";                                                       //test
+
+        //static string PathDB = "server=localhost;user=root;database=kernelhelpbot;password=toor;charset=utf8mb4;";              //test
+        //string BotApi = "6382587286:AAGwGAaNmKMy-oD-wzqtihpFe_3oI2TZlf0";                                                       //test
 
 
 
-        // static string PathDB = "server=localhost;user=root;database=kernelhelpbot;password=P@ssw0rd$D;charset=utf8mb4;";     //prod
-        //string BotApi = "6939260864:AAH-IALzUbpfoAdQQwxPFVQpmyZWCF2s6Wk";                                                     //prod
+        static string PathDB = "server=localhost;user=root;database=kernelhelpbot;password=P@ssw0rd$D;charset=utf8mb4;";     //prod
+        string BotApi = "6939260864:AAH-IALzUbpfoAdQQwxPFVQpmyZWCF2s6Wk";                                                     //prod
 
 
 
@@ -32,7 +32,8 @@ namespace KernelHelpBot.Controllers
         private static readonly object lockObj = new object();
         private bool isUpdating = false;
         public TelegramBot Bot;
-        Timer timer;
+        Timer timerCheckTelegramApi;
+        Timer timerCheckUserAccess;
 
         public HomeController()
         {
@@ -47,14 +48,25 @@ namespace KernelHelpBot.Controllers
                     if (!isInitialized)
                     {
                         Bot = new TelegramBot(PathDB,BotApi);
-
+                        UpdateUserAccess();
                         isInitialized = true;
-                        timer = new Timer(15 * 60 * 1000);
-                        timer.Elapsed += (sender, e) => UpdateBotStatus();
-                        timer.Start();
+                        timerCheckTelegramApi = new Timer(15 * 60 * 1000);
+                        timerCheckTelegramApi.Elapsed += (sender, e) => UpdateBotStatus();
+                        timerCheckTelegramApi.Start();
+
+
+
+                        timerCheckUserAccess = new Timer(24*60 * 60 * 1000);
+                        timerCheckUserAccess.Elapsed += (sender, e) => UpdateUserAccess();
+                        timerCheckUserAccess.Start();
+
                     }
                 }
             }
+        }
+        public async void UpdateUserAccess()
+        {
+            TelegramBot.CheckAccessAllUSers();
         }
         public async void UpdateBotStatus()
         {

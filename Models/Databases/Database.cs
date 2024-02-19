@@ -2,9 +2,14 @@
 using KernelHelpBot.Models.TechniksInformation;
 
 using MySql.Data.MySqlClient;
+using System;
+using System.ComponentModel;
 using System.IO;
 using System.Reflection;
+using Telegram.Bot.Types;
+
 using static System.Net.Mime.MediaTypeNames;
+using User = KernelHelpBot.Models.People_Information.User;
 
 namespace KernelHelpBot.Models.Databases
 {
@@ -63,8 +68,8 @@ namespace KernelHelpBot.Models.Databases
                                                     "`username` = @username, " +
                                                     "`last_message` = @last_message, " +
                                                     "`description` = @description, " +
-                                                    "`departament` = @department " +
-                                                      "`active` = @active, " +
+                                                    "`departament` = @department, " +
+                                                    "`active` = @active, " +
                                                     "`project` = @project " +
                                                     "WHERE (`id` = @telegram_id);";
 
@@ -135,7 +140,7 @@ namespace KernelHelpBot.Models.Databases
                 MySqlConnection connection = new MySqlConnection(path);
                 connection.Open();
                 string sql_zapros1 = $"SELECT id, telegram_id, name, surname, email, phone_number, work_position, username, fisrtname, " +
-                $"lastname, last_message, access, description, departament,active,project FROM users WHERE telegram_id='{telegramId}'";
+                $"lastname, last_message, access, description, departament,active,project,RandomCode,TimeHealthCode,temporary_mail FROM users WHERE telegram_id='{telegramId}'";
 
                 MySqlCommand command = new MySqlCommand(sql_zapros1, connection);
                 MySqlDataReader reader = command.ExecuteReader();
@@ -158,6 +163,9 @@ namespace KernelHelpBot.Models.Databases
                     u.department = reader[13].ToString();
                     u.active = Convert.ToBoolean(reader[14]);
                     u.project = reader[15].ToString();
+                    u.RandomCode = reader[16].ToString();
+                    u.TimeHealthCode = reader[17].ToString();
+                    u.temporary_mail = reader[18].ToString();
                 }
                 connection.Close();
                 return u;
@@ -177,7 +185,7 @@ namespace KernelHelpBot.Models.Databases
                 MySqlConnection connection = new MySqlConnection(path);
                 connection.Open();
                 string sql_zapros1 = $"SELECT id, telegram_id, name, surname, email, phone_number, work_position, username, fisrtname, " +
-                $"lastname, last_message, access, description, departament,active,project FROM users WHERE email='{email}'";
+                $"lastname, last_message, access, description, departament,active,project,RandomCode,TimeHealthCode,temporary_mail FROM users WHERE email='{email}'";
 
                 MySqlCommand command = new MySqlCommand(sql_zapros1, connection);
                 MySqlDataReader reader = command.ExecuteReader();
@@ -200,6 +208,9 @@ namespace KernelHelpBot.Models.Databases
                     u.department = reader[13].ToString();
                     u.active = Convert.ToBoolean(reader[14]);
                     u.project = reader[15].ToString();
+                    u.RandomCode = reader[16].ToString();
+                    u.TimeHealthCode = reader[17].ToString();
+                    u.temporary_mail = reader[18].ToString();
                 }
                 connection.Close();
                 return u;
@@ -210,6 +221,119 @@ namespace KernelHelpBot.Models.Databases
 
                 return null;
             }
+        }
+        public async Task<bool> UpdateUserInfo(long telegram_id, string column, string value)
+        {
+
+            try
+            {
+                using (MySqlConnection connection = new MySqlConnection(path))
+                {
+                    await connection.OpenAsync();
+                    string request = $" UPDATE `kernelhelpbot`.`users` SET `"+ column + "` = '" + value + "' WHERE(`telegram_id` = '" + telegram_id + "');";
+                    MySqlCommand command = new MySqlCommand(request, connection);
+                    await command.ExecuteScalarAsync();
+
+                    return true;
+                }
+
+            }
+            catch (Exception ex) { Console.WriteLine(ex.Message); }
+            return false;
+        }
+        public async Task<bool> UpdateRandomCodeAndTime(long tel_id, string code, string time)
+        {
+          
+            
+            try
+            {
+                using (MySqlConnection connection = new MySqlConnection(path))
+                {
+                    await connection.OpenAsync();
+                    string request = $" UPDATE `kernelhelpbot`.`users` SET `RandomCode` = '"+ code + "', `TimeHealthCode` = '"+time+ "' WHERE(`telegram_id` = '" + tel_id+"');";
+                    MySqlCommand command = new MySqlCommand(request, connection);
+                   await  command.ExecuteScalarAsync();
+
+                    return true;
+                }
+
+            }
+            catch (Exception ex) { Console.WriteLine(ex.Message); }
+            return false;
+        }
+        public async Task<bool> CheckActionCode(long tel_id, string code)
+        {
+            try
+            {
+                using (MySqlConnection connection = new MySqlConnection(path))
+                {
+                    await connection.OpenAsync();
+                    string request = $"SELECT RandomCode, TimeHealthCode FROM kernelhelpbot.users WHERE telegram_id='{tel_id}';";
+                    MySqlCommand command = new MySqlCommand(request, connection);
+
+                    MySqlDataReader reader =  command.ExecuteReader();
+
+                    while ( reader.Read())
+                    {
+                        string codeFromDB = reader.GetString(0);
+                        DateTime timeHealthCodeFromDB = reader.GetDateTime(1);
+
+                        // Проверяем, совпадает ли код и время
+                        if (codeFromDB == code && timeHealthCodeFromDB > DateTime.Now)
+                        {
+                            return true;
+                        }
+                        else return false;
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+
+
+
+            return false;
+        }
+        public async Task<bool> UpdateAction(long tel_id, bool active)
+        {
+            try
+            {
+                using (MySqlConnection connection = new MySqlConnection(path))
+                {
+                    await connection.OpenAsync();
+                    string request = $"UPDATE `kernelhelpbot`.`users` SET `active` = '{Convert.ToInt32(active)}' WHERE (`telegram_id` = '{tel_id}');";
+                    MySqlCommand command = new MySqlCommand(request, connection);
+
+                   await command.ExecuteNonQueryAsync();
+
+                    return true;
+                }
+
+            }
+            catch (Exception ex) { Console.WriteLine(ex.Message); }
+            return false;
+        }
+        public async Task<bool> UpdateTemporary_mail(long tel_id, string temporary_mail)
+        {
+            try
+            {
+                using (MySqlConnection connection = new MySqlConnection(path))
+                {
+                    await connection.OpenAsync();
+                    string request = $"UPDATE `kernelhelpbot`.`users` SET `temporary_mail` = '{temporary_mail}' WHERE (`telegram_id` = '{tel_id}');";
+                    MySqlCommand command = new MySqlCommand(request, connection);
+
+                    await command.ExecuteNonQueryAsync();
+
+                    return true;
+                }
+
+            }
+            catch (Exception ex) { Console.WriteLine(ex.Message); }
+            return false;
         }
         public async Task<List<User>> GetAllUsers()
         {

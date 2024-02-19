@@ -14,6 +14,9 @@
         public TelegramData telegram_data = new TelegramData();
         public bool active { get; set; }
         public string project { get; set; }
+        public string RandomCode { get; set; }
+        public string TimeHealthCode { get; set; }
+        public string temporary_mail { get; set; }
 
     }
 }

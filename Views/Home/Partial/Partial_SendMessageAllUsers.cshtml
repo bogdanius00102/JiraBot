@@ -4,7 +4,7 @@
         <label for="message">Повідомленя:</label>
         <textarea id="message" rows="5"></textarea>
     </div>
-    <button onclick="sendMessage()">Відправити</button>
+    <button id='btn_send_msg' onclick="sendMessage()">Відправити</button>
     <div id="result_send"></div>
 </div>
 
@@ -53,16 +53,31 @@ button {
 button:hover {
     background-color: #45a049;
 }
+
+ .disabled-button {
+        background-color: #cccccc; /* серый цвет */
+        cursor: not-allowed; /* указатель будет меняться на запрещающий */
+    }
 </style>
 <script>
     function sendMessage() {
+
+        document.getElementById("btn_send_msg").disabled = true;
+         document.getElementById("btn_send_msg").classList.add("disabled-button");
+
         const message = document.getElementById('message').value;
+        document.getElementById('result_send').innerHtml="Відправляю";
+
         $.ajax({
             type: "POST",
             url: 'SendMessageAllUsers',
             data: ({ text: message }),
             success: function (res) {
+                 document.getElementById("btn_send_msg").classList.remove("disabled-button");
+               
                 $("#result_send").html(res);
+                   document.getElementById("btn_send_msg").disabled = true;
+
             }
         });
        

@@ -27,11 +27,15 @@ namespace KernelHelpBot.Models.ApiAuthenticationUser
                 try
                 {
                     HttpResponseMessage response = await httpClient.GetAsync(apiUrl);
-                    Console.WriteLine(response.StatusCode);
+                 //   Console.WriteLine(response.StatusCode);
                     if (response.IsSuccessStatusCode)
                     {
                         string responseContent = await response.Content.ReadAsStringAsync();
-
+                        if(responseContent== "{\"entries\":null}")
+                        {
+                            u.active = false;//Зареган по почте
+                            return u;
+                        }
                         responseContent = HttpUtility.UrlDecode(responseContent);
                         UserInfo _u = JsonConvert.DeserializeObject<UserInfo>(responseContent);
                         if(_u!=null)if(_u.entries!=null)if(_u.entries.entry!=null)
@@ -44,6 +48,15 @@ namespace KernelHelpBot.Models.ApiAuthenticationUser
                             u.surname = e.Familiya;
                             u.email = e.Pochta;
                             u.work_position = e.MestoRaboty;
+                                        u.project = "ITSD";
+                                        if (e.LoginAccountDisabled==0)
+                                        {
+                                            u.active = true;
+                                        }
+                                        else
+                                        {
+                                            u.active = false;
+                                        }
                         }
                         else if (_u.entries.entry is JArray)
                         {
@@ -59,8 +72,16 @@ namespace KernelHelpBot.Models.ApiAuthenticationUser
                                     u.surname = e.Familiya;
                                     u.email = e.Pochta;
                                     u.work_position = e.MestoRaboty;
-
-                                    return u;
+                                                u.project = "ITSD";
+                                                if (e.LoginAccountDisabled == 0)
+                                                {
+                                                    u.active = true;
+                                                }
+                                                else
+                                                {
+                                                    u.active = false;
+                                                }
+                                                return u;
                                 }
                             }
                         }

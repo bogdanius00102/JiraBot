@@ -38,7 +38,7 @@ namespace KernelHelpBot.Models
            
             Bot.StartReceiving(Update, Error);
         }
-     public  void StopReceiving()
+         public  void StopReceiving()
         {
             Console.WriteLine("StopReceiving!");
            
@@ -121,7 +121,7 @@ namespace KernelHelpBot.Models
                     {
                         await Console.Out.WriteLineAsync($"{DateTime.Now} {e.Message.From.Id} {e.Message.From.Username} {e.Message.From.FirstName} {e.Message.From.LastName} sendPhone: {e.Message.Contact.PhoneNumber}");
                        // await Bot.SendTextMessageAsync(id_admin_chat, $"{DateTime.Now} {e.Message.From.Id} {e.Message.From.Username} {e.Message.From.FirstName} {e.Message.From.LastName} sendPhone: {e.Message.Contact.PhoneNumber}");
-                        if (u==null)
+                        if (u==null || u.active==false)
                         ForGetContact(e);
                         return;
                     }
@@ -163,42 +163,65 @@ namespace KernelHelpBot.Models
                         ForMessageText(e);
                         else
                         {
+                           // return;
                             if(e.Message.Text.Contains("@kernel.ua") || e.Message.Text.Contains("@kernel.local") || e.Message.Text.Contains("@yztk.ua")  )
                             {
-                                String SendMailFrom = "b.doroshkov@gmail.com";
-                                String SendMailTo = e.Message.Text;
-                                String SendMailSubject = "Подтверждение доступа в телеграм бот Kernel Digital. IT Service Desk Bot";
-                                String SendMailBody = "Код 12345";
-
-                                try
+                                if(e.Message.Text.Contains("@kernel.ua"))
                                 {
-                                    SmtpClient SmtpServer = new SmtpClient("smtp.gmail.com", 587);
-                                    SmtpServer.DeliveryMethod = SmtpDeliveryMethod.Network;
-                                    MailMessage email = new MailMessage();
-                                    // START
-                                    email.From = new MailAddress(SendMailFrom);
-                                    email.To.Add(SendMailTo);
-                                    email.CC.Add(SendMailFrom);
-                                    email.Subject = SendMailSubject;
-                                    email.Body = SendMailBody;
-                                    //END
-                                    SmtpServer.Timeout = 5000;
-                                    SmtpServer.EnableSsl = true;
-                                    SmtpServer.UseDefaultCredentials = false;
-                                    SmtpServer.Credentials = new NetworkCredential(SendMailFrom, "yrynihltjsdkwgsu");
-                                    SmtpServer.Send(email);
-
-                                    Console.WriteLine("Email Successfully Sent");
-                                    await Bot.SendTextMessageAsync(e.Message.From.Id, "Отправил вам на почту код.");
+                                    User _checkUser = db.getUserBytelegramId(e.Message.Text);
+                                    if (_checkUser != null)
+                                    {
+                                        await Bot.SendTextMessageAsync(e.Message.From.Id, "Користувач на вказану Вами пошту вже зареєстрован. Зверніться за підтримкою через портал IT Service Desk.");
+                                        await Bot.SendTextMessageAsync(494277044, $"Пользователь {e.Message.From.Id} {e.Message.From.Username} {e.Message.From.FirstName} {e.Message.From.LastName} {u.telegram_data.phone_number} хотел авторизоваться, используя почту {e.Message.Text} , но по этой почте уже зарегистрирован другой пользователь {_checkUser.name} {_checkUser.surname} {_checkUser.telegram_data.phone_number}   ");
+                                        await Bot.SendTextMessageAsync(436138063, $"Пользователь {e.Message.From.Id} {e.Message.From.Username} {e.Message.From.FirstName} {e.Message.From.LastName} {u.telegram_data.phone_number} хотел авторизоваться, используя почту {e.Message.Text} , но по этой почте уже зарегистрирован другой пользователь {_checkUser.name} {_checkUser.surname} {_checkUser.telegram_data.phone_number}   ");
+                                        return;
+                                    }
+                                    bool setting_project= db.UpdateUserInfo(e.Message.From.Id, "project", "ITSD").Result;
+                                    AuthorizeForMail(e, u);
+                                }
+                                else
+                                {
 
                                 }
-                                catch (Exception ex)
-                                {
-                                    Console.WriteLine(ex.ToString());
-                                    Console.ReadKey();
-                                }
+
                                
+                             
                                 return;
+                            }
+                            else if(u.temporary_mail!=null &&u.temporary_mail!="" )
+                            {
+                                string text = e.Message.Text;
+                                //if(e.Message.Text.Contains("/start ")&& e.Message.Text.Length==11)
+                                //{
+                                //    text = text.Replace("/start ", "");
+                                //    await Bot.SendTextMessageAsync(e.Message.From.Id, "Ви відправили код "+ text+", перевіряю ");
+                                //}
+
+                                if(text.Length==4 && text.All(char.IsDigit) )
+                                {
+                                    bool checkAuthorizeCodeByTime = db.CheckActionCode(e.Message.From.Id, text).Result;
+                                    if (checkAuthorizeCodeByTime)
+                                    {
+                                        string _mail = u.temporary_mail;
+                                        if (db.UpdateUserInfo(e.Message.From.Id, "email", _mail).Result)
+                                            if (db.UpdateAction(e.Message.From.Id, true).Result)
+                                            {
+                                                ForStart(e); return;
+                                            }
+                                    }
+                                    else
+                                    {
+                                        await Bot.SendTextMessageAsync(e.Message.From.Id, "Код невірний або час підтвердження минув. Надішліть Вашу пошту ще раз, і я надішлю новий код.");
+                                    }
+
+                                }
+                                else
+                                {
+                                    await Bot.SendTextMessageAsync(e.Message.From.Id, "Код для підтвердження авторизації користувача було надіслано на вказану Вами електронну пошту. Будь ласка, введіть його у боті або надішліть пошту ще раз, якщо потрібно повторно надіслати код.");
+
+                                }
+
+
                             }
                             else
                                 
@@ -236,7 +259,62 @@ namespace KernelHelpBot.Models
             }
 
         }
-        static async void GetPhoto(Update e, User u)
+         static async void AuthorizeForMail(Update e, User u)
+        {
+
+
+            int code = new Random().Next(1000,9999);
+            DateTime currentTime = DateTime.Now;
+
+            // Добавляем 10 минут к текущему времени
+            DateTime newTime = currentTime.AddMinutes(10);
+
+            // Форматируем новое время в строку в нужном формате (dd.MM.yyyy)
+            string time = newTime.ToString("yyyy-MM-dd HH:mm:ss");
+
+            bool addRandomCode= db.UpdateRandomCodeAndTime(e.Message.From.Id,code.ToString(),time ).Result;
+            bool Update_Temporary_mail = db.UpdateTemporary_mail(e.Message.From.Id, e.Message.Text).Result;
+
+            if (addRandomCode&& Update_Temporary_mail)
+            {
+
+                String SendMailFrom = "t-bot_sd@kernel.ua";
+                String SendMailTo = e.Message.Text;               
+                String SendMailSubject = "Авторизація у телеграм боті Kernel Digital. IT Service Desk Bot";
+                String SendMailBody = "<!DOCTYPE html> <html lang=\"uk\"> <head> <meta charset=\"UTF-8\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Код підтвердження для авторизації в телеграм боті</title> </head> <body style=\"font-family: Arial, sans-serif; background-color: #f4f4f4;\"> <table cellspacing=\"0\" cellpadding=\"0\" border=\"0\" width=\"100%\" style=\"max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px; border-radius: 5px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);\"> <tr> <td align=\"center\"> <h2 style=\"color: #333333;\">Підтвердження авторизації в телеграм боті Kernel Digital. IT Service Desk Bot </h2> <p style=\"color: #666666;\">Шановний користувач,</p> <p style=\"color: #666666;\">Ваш код підтвердження:</p> <div style=\"font-size: 24px; font-weight: bold; color: #007bff; margin-top: 20px;\">" + code + "</div>  <p style=\"color: #666666;\">Код дійсний до " + time + "</p>   <p style=\"color: #666666;\">Будь ласка, введіть цей код у чаті з ботом <strong>Kernel Digital. IT Service Desk Bot</strong> в Telegram для підтвердження Вашої ідентифікації.</p> <table cellspacing=\"0\" cellpadding=\"0\" border=\"0\" style=\"margin-top: 20px;\"> <tr> <td style=\"border-radius: 5px;\"> <a href=\"https://t.me/KD_ITSD_bot\" target=\"_blank\" style=\"display: inline-block; background-color: #0088cc; color: #ffffff; text-decoration: none; padding: 10px 20px; border-radius: 5px;\">Перейти в Telegram бота</a> </td> </tr> </table> <p style=\"color: #666666; margin-top: 20px;\">Якщо у Вас виникли будь-які питання, будь ласка, зв'яжіться з нашою службою підтримки за електронною адресою <a href=\"mailto:sd@kernel.ua\">sd@kernel.ua</a>.</p> <p style=\"color: #666666;\">З повагою, служба сервісів ІТ інфраструктури та підтримки користувачів</p> </td> </tr> </table> </body> </html>";
+
+                try
+                {
+                    SmtpClient SmtpServer = new SmtpClient("smtp.office365.com", 587);
+                    SmtpServer.DeliveryMethod = SmtpDeliveryMethod.Network;
+                    MailMessage mail = new MailMessage();
+                    // START
+                    mail.From = new MailAddress(SendMailFrom);
+                    mail.To.Add(SendMailTo);
+                  
+
+                    mail.Subject = SendMailSubject;
+                    mail.Body = SendMailBody;
+                    mail.IsBodyHtml = true;
+                    //END
+                    SmtpServer.Timeout = 5000;
+                    SmtpServer.EnableSsl = true;
+                    SmtpServer.UseDefaultCredentials = false;
+                    SmtpServer.Credentials = new NetworkCredential(SendMailFrom, "5QR2A6Eta");
+                    SmtpServer.Send(mail);
+                    await Bot.SendTextMessageAsync(e.Message.From.Id, "Лист із кодом підтвердження відправлено на вказаний Вами e-mail. Введіть код тут.");
+                    
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.ToString());
+                  
+                }
+            }
+
+
+        }
+         static async void GetPhoto(Update e, User u)
         {
             if (e.Message.MediaGroupId == null)
             {
@@ -317,7 +395,23 @@ namespace KernelHelpBot.Models
 
 
         }
+        public static async void CheckAccessAllUSers()
+        {
+            List<User> users = db.GetAllUsers().Result;
 
+            foreach (User user in users)
+            {
+                if(user.telegram_data.phone_number!=null && user.telegram_data.phone_number!=""&&user.name!=null && user.name!="")
+                {
+                    bool active = user.active;
+                    User updateUser=RequestTo1cApi.SearchUser(user).Result;
+                    if (active!=updateUser.active)
+                    {
+                        db.UpdateAction(user.telegram_data.telegram_id, updateUser.active);
+                    }
+                }
+            }
+        }
          static async void ForMessageText(Update e)
         {
              Console.Out.WriteLineAsync($"{DateTime.Now} {e.Message.From.Id} {e.Message.From.Username} {e.Message.From.FirstName} {e.Message.From.LastName} send: {e.Message.Text}");
@@ -326,8 +420,8 @@ namespace KernelHelpBot.Models
 
             switch (e.Message.Text)
             {
+              
 
-               
                 case "❓ Хочу запитати":
                     CreateNewRequest(e);return;
                    
@@ -371,6 +465,7 @@ namespace KernelHelpBot.Models
                 Text_For_Create_New_Comment(e, ket_task); return;
             }
         }
+        
          static async void SendStartKeyboard(User u)
         {
           
@@ -398,6 +493,7 @@ namespace KernelHelpBot.Models
                                                     new KeyboardButton ("📖 Довідник"),
 
                                             },
+                                        
                                             }
                                         );
             replyKeyboard.ResizeKeyboard = true;
@@ -409,6 +505,7 @@ namespace KernelHelpBot.Models
             else
             {
                 await Bot.SendTextMessageAsync(u.telegram_data.telegram_id, "Раді Вас бачити з нами", replyMarkup: replyKeyboard);
+                db.Update_options_for_create_task(u.telegram_data.telegram_id, "");
             }
 
         }
@@ -472,8 +569,9 @@ namespace KernelHelpBot.Models
                     DateTime currentTime = DateTime.Now;
                     bool isWeekday = currentTime.DayOfWeek >= DayOfWeek.Monday && currentTime.DayOfWeek <= DayOfWeek.Friday;
                     bool isWorkingHours = currentTime.TimeOfDay >= new TimeSpan(8, 0, 0) && currentTime.TimeOfDay < new TimeSpan(18, 0, 0);
-                    if(isWeekday==false || isWorkingHours==false )
-                    {                       
+                    if (u.work_position != null && u.work_position != "" && (isWeekday == false || isWorkingHours == false))
+
+                    {
                         List<Organization> organizations = db.GetListOrganization();
                         int id = 0;
                         id = (from t in organizations where t.name == u.work_position select t.id).FirstOrDefault();
@@ -535,7 +633,7 @@ namespace KernelHelpBot.Models
                                 DateTime currentTime = DateTime.Now;
                                 bool isWeekday = currentTime.DayOfWeek >= DayOfWeek.Monday && currentTime.DayOfWeek <= DayOfWeek.Friday;
                                 bool isWorkingHours = currentTime.TimeOfDay >= new TimeSpan(8, 0, 0) && currentTime.TimeOfDay < new TimeSpan(18, 0, 0);
-                                if (isWeekday == false || isWorkingHours == false)
+                                if (  u.work_position!=null&& u.work_position!=""  &&(isWeekday == false || isWorkingHours == false))
                                 {
                                     List<Organization> organizations = db.GetListOrganization();
                                     int id = 0;
@@ -636,7 +734,8 @@ namespace KernelHelpBot.Models
                             DateTime currentTime = DateTime.Now;
                             bool isWeekday = currentTime.DayOfWeek >= DayOfWeek.Monday && currentTime.DayOfWeek <= DayOfWeek.Friday;
                             bool isWorkingHours = currentTime.TimeOfDay >= new TimeSpan(8, 0, 0) && currentTime.TimeOfDay < new TimeSpan(18, 0, 0);
-                            if (isWeekday == false || isWorkingHours == false)
+                            if (u.work_position != null && u.work_position != "" && (isWeekday == false || isWorkingHours == false))
+
                             {
                                 List<Organization> organizations = db.GetListOrganization();
                                 int id = 0;
@@ -644,6 +743,7 @@ namespace KernelHelpBot.Models
                                 if(id==0)
                                 {
                                     await Bot.SendTextMessageAsync(494277044, $"Користувач {u.name} {u.surname} створив заявку у неробочий час, але відповідність його workPosition серед ITHub не знайдена. Його WorkPosition:{u.work_position}");
+                                    await Bot.SendTextMessageAsync(436138063, $"Користувач {u.name} {u.surname} створив заявку у неробочий час, але відповідність його workPosition серед ITHub не знайдена. Його WorkPosition:{u.work_position}");
 
                                     Console.WriteLine($"Користувач {u.name} {u.surname} створив заявку у неробочий час, але відповідність його workPosition серед ITHub не знайдена. Його WorkPosition:{u.work_position}");
 
@@ -1028,7 +1128,7 @@ namespace KernelHelpBot.Models
                 u.telegram_data.fisrtname = e.Message.From.FirstName;
                 u.telegram_data.lastname = e.Message.From.LastName;
                 u.telegram_data.last_message = e.Message.Text;
-
+                u.active = false;
                 string phone = e.Message.Contact.PhoneNumber;
                 phone = phone.Replace("(", "");
                 phone = phone.Replace(")", "");
@@ -1050,36 +1150,36 @@ namespace KernelHelpBot.Models
                 u = RequestTo1cApi.SearchUser(u).Result;
                 if (u.name == null || u.name == "")
                 {
-                    /*NetPravNaBota(e)*/
-                     u.active = false;
+                  
+                    
                    bool addNew_not_1C_user =db.AddOrUpdateUser(u);
                     if(addNew_not_1C_user)
                     {
-                        await Bot.SendTextMessageAsync(e.Message.From.Id, "Наразі у вас немає прав на використання цього бота. Для роз'яснень зверніться до Вашого IT фахівця будь-яким іншим доступним способом. Але є можливість ідентифікації через вашу пошту. Будь ласка відправте мені ваш email.");
+                        await Bot.SendTextMessageAsync(e.Message.From.Id, "Наразі у Вас немає прав на використання цього бота. Для роз'яснень зверніться до Вашого IT фахівця будь-яким іншим доступним способом. \nДля ідентифікації за допомогою корпоративної пошти – напишіть мені Ваш e-mail.");
 
                     }
                     return; 
                 }
                 else
                 {
-                    u.active = true;
-                    u.project = "ITSD";
+
+                    bool addNewUser = db.AddOrUpdateUser(u);
+                    if (addNewUser)
+                    {
+                        SendStartKeyboard(u);
+                    }
+                    else
+                    {
+                        await Console.Out.WriteLineAsync();
+                    }
                 }
-                bool addNewUser = db.AddOrUpdateUser(u);
-                if (addNewUser)
-                {
-                    SendStartKeyboard(u);
-                }
-                else
-                {
-                    await Console.Out.WriteLineAsync();
-                }
+                
             }
             catch (Exception ex) { Console.WriteLine(ex.Message); }
         }
          static async void NetPravNaBota(Update e)
         {
-            await Bot.SendTextMessageAsync(e.Message.From.Id, "Наразі у вас немає прав на використання цього бота."); ForStart(e);
+            await Bot.SendTextMessageAsync(e.Message.From.Id, "Наразі у Вас немає прав на використання цього бота."); ForStart(e);
         }     
          static async void CreateNewRequest(Update e)
         {
@@ -1281,7 +1381,7 @@ namespace KernelHelpBot.Models
                      
                 }
                 InlineKeyboardMarkup inlinekeyboard = new InlineKeyboardMarkup(buttons);
-                await Bot.SendTextMessageAsync(e.Message.From.Id, "Оберіть, що саме вас цікавить?", replyMarkup: inlinekeyboard);
+                await Bot.SendTextMessageAsync(e.Message.From.Id, "Оберіть, що саме Вас цікавить?", replyMarkup: inlinekeyboard);
             }
 
          
