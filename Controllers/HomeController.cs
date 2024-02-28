@@ -16,7 +16,7 @@ namespace KernelHelpBot.Controllers
     {
         private readonly ILogger<HomeController> _logger;
 
-        //static string PathDB = "server=localhost;user=root;database=kernelhelpbot;password=toor;charset=utf8mb4;";              //test
+        //static string PathDB = "server=10.210.50.35;user=bogdan;database=kernelhelpbot;password=P@ssw0rd$D;charset=utf8mb4;";              //test
         //string BotApi = "6382587286:AAGwGAaNmKMy-oD-wzqtihpFe_3oI2TZlf0";                                                       //test
 
 

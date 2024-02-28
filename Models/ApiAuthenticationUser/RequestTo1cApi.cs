@@ -49,7 +49,11 @@ namespace KernelHelpBot.Models.ApiAuthenticationUser
                             u.email = e.Pochta;
                             u.work_position = e.MestoRaboty;
                                         u.project = "ITSD";
-                                        if (e.LoginAccountDisabled==0)
+                                        //if (e.LoginAccountDisabled==0)
+                                        //{
+                                        //    u.active = true;
+                                        //}
+                                        if (e.DataUvolneniya == null)
                                         {
                                             u.active = true;
                                         }
@@ -73,7 +77,11 @@ namespace KernelHelpBot.Models.ApiAuthenticationUser
                                     u.email = e.Pochta;
                                     u.work_position = e.MestoRaboty;
                                                 u.project = "ITSD";
-                                                if (e.LoginAccountDisabled == 0)
+                                                //if (e.LoginAccountDisabled == 0)
+                                                //{
+                                                //    u.active = true;
+                                                //}
+                                                if(e.DataUvolneniya==null)
                                                 {
                                                     u.active = true;
                                                 }

@@ -93,7 +93,7 @@ namespace KernelHelpBot.Models.JiraRequest
 
                 //string jqlQuery = "project = ITSD AND reporter = '" + u.email+ "' AND status in (Open, \"In Progress\", Reopened, \"Waiting for support\", Pending, Escalated, \"Waiting for approval\", \"Work in progress\", \"Awaiting CAB approval\", Planning, Implementing, Assigned, \"Assigned to group\", \"Ожидание выполнения\", \"In Progress contractor\", \"Transferred to contractor\", \"Awaiting fin CAB\", \"Cmdb owner approval\") AND issuetype != 'Epic (Проект)'";
                 //string jqlQuery = "project in (ITSD, SDTES) AND reporter = '" + u.email + "' AND status in (Open, \"In Progress\", Reopened, \"Waiting for support\", Pending, Escalated, \"Waiting for approval\", \"Work in progress\", \"Awaiting CAB approval\", Planning, Implementing, Assigned, \"Assigned to group\", \"Ожидание выполнения\", \"In Progress contractor\", \"Transferred to contractor\", \"Awaiting fin CAB\", \"Cmdb owner approval\") AND issuetype != 'Epic (Проект)'";
-                string jqlQuery = $"project = ITSD AND issuetype = \"Service Request\" AND status NOT in (Resolved, Closed, Canceled) AND (reporter = \"{u.email}\" OR TelegramID  ~ \"{u.telegram_data.telegram_id}\")";
+                string jqlQuery = $"project in (ITSD, SD1C, SDNAV) AND issuetype = \"Service Request\" AND status NOT in (Resolved, Closed, Canceled) AND (reporter = \"{u.email}\" OR TelegramID  ~ \"{u.telegram_data.telegram_id}\")";
 
 
 
