@@ -13,6 +13,10 @@
       "PackagePath": "staticwebassets\\favicon.ico"
     },
     {
+      "Id": "C:\\Visual studio\\JiraBot\\wwwroot\\js\\qr_generator.js",
+      "PackagePath": "staticwebassets\\js\\qr_generator.js"
+    },
+    {
       "Id": "C:\\Visual studio\\JiraBot\\wwwroot\\js\\site.js",
       "PackagePath": "staticwebassets\\js\\site.js"
     },

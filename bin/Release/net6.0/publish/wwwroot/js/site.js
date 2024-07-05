@@ -11,16 +11,36 @@ function generateQR150(text) {
         $("#result150_" + text).html(img);
     }
 
-function generateQR300(text) {
+function generateQR300Old(text) {
 
     let size = 300;
 
     var data = 'https://telegram.me/KD_ITSD_bot?start=QRProblemDevice_and_Programs_id_' + text;
 
-    var img = '<img alter="image" style="margin: 0 auto" src="https://chart.googleapis.com/chart?chs=' + size + 'x' + size + '&cht=qr&chl=' + data + '">';
+    //var img = '<img alter="image" style="margin: 0 auto" src="https://chart.googleapis.com/chart?chs=' + size + 'x' + size + '&cht=qr&chl=' + data + '">';
+    var img = '<img alter="image" style="margin: 0 auto" src="https://api.qrserver.com/v1/create-qr-code/?size=' + size + 'x' + size + '&data=' + data + '">';
 
     $("#result300_" + text).html(img);
 }
+function generateQR300(text) {
+
+    let size = 300;
+    var data = 'https://telegram.me/KD_ITSD_bot?start=QRProblemDevice_and_Programs_id_' + text;
+    var qrContainer = document.getElementById("result300_" + text);
+
+    // Очистить содержимое контейнера перед генерацией нового QR-кода
+    qrContainer.innerHTML = "";
+
+    // Создать новый QR-код
+    new QRCode(qrContainer, {
+        text: data,
+        width: size,
+        height: size
+    });
+
+   
+}
+
 
 function generateQR500(text) {
 

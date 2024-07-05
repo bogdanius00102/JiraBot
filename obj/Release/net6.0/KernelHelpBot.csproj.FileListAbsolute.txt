@@ -118,9 +118,10 @@ C:\Visual studio\JiraBot\obj\Release\net6.0\staticwebassets.development.json
 C:\Visual studio\JiraBot\obj\Release\net6.0\scopedcss\Views\Shared\_Layout.cshtml.rz.scp.css
 C:\Visual studio\JiraBot\obj\Release\net6.0\scopedcss\bundle\KernelHelpBot.styles.css
 C:\Visual studio\JiraBot\obj\Release\net6.0\scopedcss\projectbundle\KernelHelpBot.bundle.scp.css
-C:\Visual studio\JiraBot\obj\Release\net6.0\KernelHelpBot.csproj.CopyComplete
 C:\Visual studio\JiraBot\obj\Release\net6.0\KernelHelpBot.dll
 C:\Visual studio\JiraBot\obj\Release\net6.0\refint\KernelHelpBot.dll
 C:\Visual studio\JiraBot\obj\Release\net6.0\KernelHelpBot.pdb
 C:\Visual studio\JiraBot\obj\Release\net6.0\KernelHelpBot.genruntimeconfig.cache
 C:\Visual studio\JiraBot\obj\Release\net6.0\ref\KernelHelpBot.dll
+C:\Visual studio\JiraBot\obj\Release\net6.0\KernelHelpBot.sourcelink.json
+C:\Visual studio\JiraBot\obj\Release\net6.0\KernelHe.97017C5B.Up2Date

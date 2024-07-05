@@ -1,17 +1,10 @@
-﻿using KernelHelpBot.Models.AD;
-using KernelHelpBot.Models.ApiAuthenticationUser;
+﻿using KernelHelpBot.Models.ApiAuthenticationUser;
 using KernelHelpBot.Models.Databases;
 using KernelHelpBot.Models.JiraRequest;
 using KernelHelpBot.Models.People_Information;
 using KernelHelpBot.Models.TechniksInformation;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.VisualBasic;
-using MySqlX.XDevAPI.Common;
-using System.ComponentModel;
-using System.Linq;
-using System.Net.Mail;
 using System.Net;
-using System.Runtime.Intrinsics.X86;
+using System.Net.Mail;
 using System.Text.RegularExpressions;
 using System.Web;
 using Telegram.Bot;
@@ -19,7 +12,6 @@ using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.InputFiles;
 using Telegram.Bot.Types.ReplyMarkups;
-using static System.Net.Mime.MediaTypeNames;
 using User = KernelHelpBot.Models.People_Information.User;
 namespace KernelHelpBot.Models
 {
@@ -37,6 +29,7 @@ namespace KernelHelpBot.Models
             Bot = new TelegramBotClient(BotApi);
            
             Bot.StartReceiving(Update, Error);
+            
         }
          public  void StopReceiving()
         {
@@ -108,6 +101,7 @@ namespace KernelHelpBot.Models
         }
          async static Task Update(ITelegramBotClient bot, Update e, CancellationToken arg3)
         {
+         
             // return;
             if (e.Message != null)
             {
@@ -164,7 +158,7 @@ namespace KernelHelpBot.Models
                         else
                         {
                            // return;
-                            if(e.Message.Text.Contains("@kernel.ua") || e.Message.Text.Contains("@kernel.local") || e.Message.Text.Contains("@yztk.ua")  )
+                            if(e.Message.Text.Contains("@kernel.ua") || e.Message.Text.Contains("@gmail.com")  || e.Message.Text.Contains("@kernel.local") || e.Message.Text.Contains("@yztk.ua")  )
                             {
                                 if(e.Message.Text.Contains("@kernel.ua"))
                                 {
@@ -179,16 +173,37 @@ namespace KernelHelpBot.Models
                                     bool setting_project= db.UpdateUserInfo(e.Message.From.Id, "project", "ITSD").Result;
                                     AuthorizeForMail(e, u);
                                 }
-                                else
-                                {
 
+                                else if (e.Message.Text.Contains("@gmail.com"))
+                                {
+                                    User _checkUser = db.getUserBytelegramId(e.Message.Text);                                    
+                                    if (_checkUser != null && _checkUser.telegram_data.telegram_id!=0)
+                                    {
+                                        await Bot.SendTextMessageAsync(e.Message.From.Id, "Користувач на вказану Вами пошту вже зареєстрован. Зверніться за підтримкою через портал IT Service Desk.");
+
+                                        await Bot.SendTextMessageAsync(494277044, $"Пользователь УЗТК {e.Message.From.Id} {e.Message.From.Username} {e.Message.From.FirstName} {e.Message.From.LastName} {u.telegram_data.phone_number} хотел авторизоваться, используя почту {e.Message.Text} ");
+                                        await Bot.SendTextMessageAsync(436138063, $"Пользователь УЗТК {e.Message.From.Id} {e.Message.From.Username} {e.Message.From.FirstName} {e.Message.From.LastName} {u.telegram_data.phone_number} хотел авторизоваться, используя почту {e.Message.Text}   ");
+                                        return;
+                                    }
+                                    else if(_checkUser!=null && _checkUser.telegram_data.telegram_id==0)
+                                    {
+                                       
+                                       bool res= db.UpdateUserInfo(e.Message.From.Id, "project","YZTK").Result;
+                                       bool res2= db.UpdateUserInfo(e.Message.From.Id, "email", e.Message.Text).Result;
+                                       bool res3= db.UpdateUserInfo(e.Message.From.Id, "active", "0").Result;
+                                      
+                                        AuthorizeForMail(e, u);
+                                    }
+                                  
                                 }
 
-                               
-                             
+
+
+
                                 return;
                             }
-                            else if(u.temporary_mail!=null &&u.temporary_mail!="" )
+                         
+                            else if (u.temporary_mail!=null &&u.temporary_mail!="" )
                             {
                                 string text = e.Message.Text;
                                 //if(e.Message.Text.Contains("/start ")&& e.Message.Text.Length==11)
@@ -399,11 +414,13 @@ namespace KernelHelpBot.Models
         {
             List<User> users = db.GetAllUsers().Result;
 
+   
             foreach (User user in users)
             {
                 if(user.telegram_data.phone_number!=null && user.telegram_data.phone_number!=""&&user.name!=null && user.name!="")
                 {
                     bool active = user.active;
+                    Thread.Sleep(5000);
                     User updateUser=RequestTo1cApi.SearchUser(user).Result;
                     if (active!=updateUser.active)
                     {
@@ -633,7 +650,9 @@ namespace KernelHelpBot.Models
                                 DateTime currentTime = DateTime.Now;
                                 bool isWeekday = currentTime.DayOfWeek >= DayOfWeek.Monday && currentTime.DayOfWeek <= DayOfWeek.Friday;
                                 bool isWorkingHours = currentTime.TimeOfDay >= new TimeSpan(8, 0, 0) && currentTime.TimeOfDay < new TimeSpan(18, 0, 0);
-                                if (  u.work_position!=null&& u.work_position!=""  &&(isWeekday == false || isWorkingHours == false))
+                               // if (  u.work_position!=null&& u.work_position!=""  &&(isWeekday == false || isWorkingHours == false ))
+                                if (u.work_position != null && u.work_position != "" && (isWeekday == false || isWorkingHours == false || currentTime.Day == 24 || currentTime.Day == 28))
+
                                 {
                                     List<Organization> organizations = db.GetListOrganization();
                                     int id = 0;

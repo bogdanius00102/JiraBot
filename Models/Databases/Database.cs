@@ -71,7 +71,7 @@ namespace KernelHelpBot.Models.Databases
                                                     "`departament` = @department, " +
                                                     "`active` = @active, " +
                                                     "`project` = @project " +
-                                                    "WHERE (`id` = @telegram_id);";
+                                                    "WHERE (`telegram_id` = @telegram_id);";
 
                             using (MySqlCommand updateUserCommand = new MySqlCommand(updateUserQuery, connection))
                             {
@@ -185,7 +185,7 @@ namespace KernelHelpBot.Models.Databases
                 MySqlConnection connection = new MySqlConnection(path);
                 connection.Open();
                 string sql_zapros1 = $"SELECT id, telegram_id, name, surname, email, phone_number, work_position, username, fisrtname, " +
-                $"lastname, last_message, access, description, departament,active,project,RandomCode,TimeHealthCode,temporary_mail FROM users WHERE email='{email}'";
+                $"lastname, last_message, access, description, departament,active,project,RandomCode,TimeHealthCode,temporary_mail FROM users WHERE (id>0 AND email='{email}')";
 
                 MySqlCommand command = new MySqlCommand(sql_zapros1, connection);
                 MySqlDataReader reader = command.ExecuteReader();
@@ -194,7 +194,7 @@ namespace KernelHelpBot.Models.Databases
                 {
                     u = new User();
                     u.id = Convert.ToInt32(reader[0]);
-                    u.telegram_data.telegram_id = Convert.ToInt64(reader[1]);
+                   // u.telegram_data.telegram_id = Convert.ToInt64(reader[1]);
                     u.name = reader[2].ToString();
                     u.surname = reader[3].ToString();
                     u.email = reader[4].ToString();
@@ -241,6 +241,26 @@ namespace KernelHelpBot.Models.Databases
             catch (Exception ex) { Console.WriteLine(ex.Message); }
             return false;
         }
+        public async Task<bool> DeleteUser(long telegram_id)
+        {
+
+            try
+            {
+                using (MySqlConnection connection = new MySqlConnection(path))
+                {
+                    await connection.OpenAsync();
+                    string request = $"DELETE FROM `kernelhelpbot`.`users` WHERE (`id` = '{telegram_id}')";
+                    MySqlCommand command = new MySqlCommand(request, connection);
+                    await command.ExecuteScalarAsync();
+
+                    return true;
+                }
+
+            }
+            catch (Exception ex) { Console.WriteLine(ex.Message); }
+            return false;
+        }
+
         public async Task<bool> UpdateRandomCodeAndTime(long tel_id, string code, string time)
         {
           
@@ -337,20 +357,23 @@ namespace KernelHelpBot.Models.Databases
         }
         public async Task<List<User>> GetAllUsers()
         {
+            List<User> users = new List<User>();
             try
             {
                 using (MySqlConnection connection = new MySqlConnection(path))
                 {
                     await connection.OpenAsync();
-                    string request = $"SELECT id, telegram_id, name, surname, email, phone_number, work_position, username, fisrtname, lastname, last_message, access, description, departament, active FROM users";
+                    string request = $"SELECT id, telegram_id, name, surname, email, phone_number, work_position, username, fisrtname, lastname, last_message, access, description, departament, active ,project FROM users";
                     MySqlCommand command = new MySqlCommand(request, connection);
-                    List<User> users = new List<User>();
+                 
                     MySqlDataReader reader = command.ExecuteReader();
 
                     while (reader.Read())
                     {
                         User u = new User();
                         u.id = Convert.ToInt32(reader[0]);
+                        if (reader[1].ToString == null || reader[1].ToString() == "")
+                            continue;
                         u.telegram_data.telegram_id = Convert.ToInt64(reader[1]);
                         u.name = reader[2].ToString();
                         u.surname = reader[3].ToString();
@@ -364,6 +387,9 @@ namespace KernelHelpBot.Models.Databases
                         u.description = reader[12].ToString();
                         u.department = reader[13].ToString();
                         u.active = Convert.ToBoolean(reader[14]);
+                        u.project = reader[15].ToString();
+                        if (u.project != "ITSD")
+                            continue;
                         users.Add(u);
                     }
                     connection.Close();

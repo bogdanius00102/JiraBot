@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("KernelHelpBot")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2c841e09a1ea6558d08766524d299f94ea094e0b")]
 [assembly: System.Reflection.AssemblyProductAttribute("KernelHelpBot")]
 [assembly: System.Reflection.AssemblyTitleAttribute("KernelHelpBot")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
